@@ -1,0 +1,7 @@
+erDiagram
+    users ||--o{ trips : owns
+    categories ||--o{ trips : categorizes
+    trips ||--|{ trip_places : contains
+    trip_places ||--o{ place_photos : has
+    users ||--o{ bookmarks : saves
+    trips ||--o{ bookmarks : referenced_by

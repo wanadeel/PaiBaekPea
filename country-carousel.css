@@ -1,0 +1,28 @@
+.country-carousel{--map-green:#214f3c;color:#183e2d;margin:12px 0 24px;min-width:0;text-shadow:none}
+.country-carousel *{box-sizing:border-box}
+.country-carousel-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}
+.country-carousel-eyebrow{margin:0 0 8px;font-size:11px;letter-spacing:2.5px;font-weight:700}
+.country-carousel-heading h3{margin:0;font-size:clamp(20px,3vw,28px);line-height:1.5}
+.country-carousel-hint{margin:6px 0 0;font-size:14px;color:#395a48}
+.country-carousel-controls{display:flex;gap:10px;flex-shrink:0}
+.country-carousel-controls[hidden]{display:none}
+.country-carousel .country-carousel-arrow{display:grid;place-items:center;width:46px;height:46px;padding:0;border-radius:50%;border:1px solid #809d8b;background:rgba(255,255,255,.78);color:#214f3c;font-size:25px;cursor:pointer;transition:background .2s,color .2s}
+.country-carousel .country-carousel-arrow:hover:not(:disabled){background:#214f3c;color:#fff}
+.country-carousel .country-carousel-arrow:disabled{opacity:.4;cursor:default}
+.country-carousel-track{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;padding:12px 4px 22px;scroll-padding-inline:4px;scrollbar-width:thin;scrollbar-color:#789882 transparent}
+.country-carousel .country-map-card{position:relative;display:flex;flex-direction:column;flex:0 0 280px;min-width:0;padding:22px;border:1px solid rgba(255,255,255,.95);border-radius:24px;background:linear-gradient(145deg,rgba(247,249,242,.92),rgba(216,232,220,.82));color:#173e2b;text-decoration:none;scroll-snap-align:center;box-shadow:0 8px 18px rgba(29,60,40,.08);transition:border-color .25s,box-shadow .25s}
+.country-carousel .country-map-card:hover,.country-carousel .country-map-card:focus-visible{border-color:#527c61;text-decoration:none;box-shadow:0 12px 24px rgba(29,60,40,.16)}
+.country-carousel .country-map-card.is-selected{border:2px solid #315f44;padding:21px;background:linear-gradient(145deg,#edf4df,#cedec3)}
+.country-map-label{align-self:flex-start;padding:5px 10px;border-radius:100px;background:rgba(255,255,255,.78);font-size:11px;font-weight:700;color:#294d36}
+.country-map-picture{display:grid;place-items:center;height:210px;perspective:800px}
+.country-carousel .country-map-picture img{width:100%;height:100%;object-fit:contain;max-width:100%;border:0;border-radius:0;transform:rotateX(14deg) rotateZ(-5deg);transition:transform .5s ease}
+.country-carousel .country-map-card:hover img,.country-carousel .country-map-card:focus-visible img{transform:translateY(-7px) rotateX(0deg) rotateZ(0deg)}
+.country-map-name{font-size:21px;font-weight:700;line-height:1.5}
+.country-map-caption{font-size:10px;letter-spacing:1px;margin-top:4px;min-height:30px;color:#46624e}
+.country-map-action{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:14px;border-top:1px solid rgba(38,77,49,.2);font-size:13px;font-weight:700}
+.country-map-action span{font-size:20px}
+.country-carousel-note{font-size:12px;color:#3d5b47;margin:12px 0 0}
+.country-carousel a:focus-visible,.country-carousel button:focus-visible,.country-carousel-track:focus-visible{outline:3px solid #315f44;outline-offset:4px}
+#country-carousel-title{scroll-margin-top:110px}
+@media(max-width:600px){.country-carousel-heading{align-items:flex-start;gap:10px}.country-carousel-controls{gap:6px}.country-carousel .country-carousel-arrow{width:40px;height:40px}.country-carousel .country-map-card{flex-basis:80%;padding:18px}.country-carousel .country-map-card.is-selected{padding:17px}.country-carousel-track{gap:14px}.country-map-picture{height:195px}.country-carousel-hint{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.country-carousel *{transition:none!important}.country-carousel .country-map-card img{transform:none!important}}

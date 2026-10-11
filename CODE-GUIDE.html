@@ -1,0 +1,2850 @@
+<!doctype html>
+<html lang="th">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>คู่มือโค้ด PaiBaekPea PHP</title>
+    <style>
+    body{
+        font:17px/1.8 
+        Tahoma,sans-serif;background:#f6f4ec;
+        color:#193e31;
+        margin:0
+        }
+    main{
+        max-width:1100px;
+        margin:auto;
+        padding:32px
+        }
+    a{
+        color:#176044
+        }
+    h1{
+        line-height:1.5
+        }
+    details{
+        background:white;
+        border:1px solid #cad8cf;
+        border-radius:12px;
+        margin:16px 0;
+        padding:16px
+        }
+    summary{
+        cursor:pointer;
+        font-weight:bold
+        }
+    pre{
+        background:#142b23;
+        color:#f0f7ef;
+        padding:24px;
+        overflow:auto;
+        font:14px/1.7 Consolas,monospace;
+        tab-size:4
+        }
+    nav{
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px
+        }
+    code{
+        font-family:Consolas,monospace
+        }
+    </style><main>
+    <h1>พักบั๊ก ไปแบกเป้ — คู่มือโค้ด PHP</h1>
+    <p>ใช้ PHP แบบ procedural + MySQLi ตามแนวไฟล์ตัวอย่าง พร้อม HTML และ CSS ฐานข้อมูล MySQL/MariaDB จัดการผ่าน phpMyAdmin</p>
+    <p>ไฟล์นี้เป็นคู่มืออ่านและคัดลอกโค้ดแบบออฟไลน์ เว็บไซต์จริงต้องเปิดผ่าน XAMPP ไม่ใช่ดับเบิลคลิกไฟล์ PHP</p>
+    <ol>
+        <li>อ่าน README.md และติดตั้ง XAMPP</li>
+        <li>วางโฟลเดอร์ PaiBaekPea-PHP ใน htdocs</li>
+        <li>นำเข้า database/schema.sql ผ่าน phpMyAdmin แล้วแก้การเชื่อมต่อใน db.php</li>
+        <li>เปิด http://localhost/PaiBaekPea-PHP/ และสมัครสมาชิก หรือเพิ่มข้อมูลตัวอย่างตาม README</li>
+        <li>อ่านโค้ดตามลำดับด้านล่าง ทุกไฟล์ใช้ร่วมกัน อย่าคัดลอกเฉพาะหน้าโดยไม่มี includes</li>
+    </ol>
+    <p>ชื่อไฟล์ยึดแนวตัวอย่าง: add_course → add_trip, edit_course → edit_trip, course_detail → trip_detail และ lesson → place ใช้ชื่อขีดล่างให้ตรงกับลิงก์ในชุดนี้</p>
+    <p>ตรวจไวยากรณ์ด้วยตัวแยกวิเคราะห์แล้ว แต่ยังไม่ได้รัน PHP/MySQL ในสภาพแวดล้อมนี้ อ่าน TEST-REPORT.md ก่อนนำไปส่งงาน</p>
+    <nav>
+        <a href="#f0">db.php</a>
+        <a href="#f1">database/schema.sql</a>
+        <a href="#f2">includes/init.php</a>
+        <a href="#f3">includes/helpers.php</a>
+        <a href="#f4">includes/header.php</a>
+        <a href="#f5">includes/footer.php</a>
+        <a href="#f6">style.css</a>
+        <a href="#f7">register.php</a>
+        <a href="#f8">login.php</a>
+        <a href="#f9">logout.php</a>
+        <a href="#f10">index.php</a>
+        <a href="#f11">my_trips.php</a>
+        <a href="#f12">add_trip.php</a>
+        <a href="#f13">edit_trip.php</a>
+        <a href="#f14">trip_detail.php</a>
+        <a href="#f15">add_place.php</a>
+        <a href="#f16">edit_place.php</a>
+        <a href="#f17">delete_place.php</a>
+        <a href="#f18">delete_trip.php</a>
+        <a href="#f19">media.php</a>
+        <a href="#f20">profile.php</a>
+        <a href="#f21">edit_profile.php</a>
+        <a href="#f22">bookmark.php</a>
+        <a href="#f23">bookmarks.php</a>
+        <a href="#f24">README.md</a>
+        <a href="#f25">STATIC-CHECK.json</a>
+        <a href="#f26">TEST-REPORT.md</a>
+        <a href="#f27">assets/CREDITS.md</a>
+        <a href="#f28">database/ER.mmd</a>
+        <a href="#f29">database/README.md</a>
+        <a href="#f30">database/seed.php</a>
+        <a href="#f31">includes/cards.php</a>
+        <a href="#f32">includes/place_fields.php</a>
+        <a href="#f33">includes/trip_fields.php</a>
+        <a href="#f34">place_view.php</a>
+    </nav><details id="f0">
+    <summary>db.php</summary>
+    <pre><code>&lt;?php
+// รูปแบบ MySQLi เหมือน db.php ต้นฉบับ
+$servername = getenv(&quot;DB_HOST&quot;) ?: &quot;localhost&quot;;
+$username = getenv(&quot;DB_USER&quot;) ?: &quot;root&quot;;
+$password = getenv(&quot;DB_PASSWORD&quot;) ?: &quot;&quot;;
+$dbname = getenv(&quot;DB_NAME&quot;) ?: &quot;paibaekpea_db&quot;;
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+try {
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn-&gt;set_charset(&quot;utf8mb4&quot;);
+} catch (mysqli_sql_exception $error) {
+    error_log($error-&gt;getMessage());
+    http_response_code(500);
+    exit(
+        &quot;เชื่อมต่อฐานข้อมูลไม่ได้ กรุณานำเข้า database/schema.sql และตรวจ db.php&quot;
+    );
+}
+// ไม่สร้างตารางหรือ seed ใหม่ทุกครั้งที่เปิดหน้าเว็บ
+</code>
+</pre>
+</details>
+<details id="f1">
+    <summary>database/schema.sql</summary>
+    <pre>
+        <code>CREATE DATABASE IF NOT EXISTS paibaekpea_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE paibaekpea_db;
+CREATE TABLE IF NOT EXISTS users (
+ user_id INT AUTO_INCREMENT PRIMARY KEY,
+ username VARCHAR(30) NOT NULL UNIQUE,
+ email VARCHAR(190) NOT NULL UNIQUE,
+ password VARCHAR(255) NOT NULL,
+ fullname VARCHAR(100) NOT NULL,
+ bio TEXT NOT NULL,
+ avatar VARCHAR(64) NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS categories (
+ category_id INT AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS trips (
+ trip_id INT AUTO_INCREMENT PRIMARY KEY,
+ user_id INT NOT NULL,
+ category_id INT NOT NULL,
+ title VARCHAR(150) NOT NULL,
+ description TEXT NOT NULL,
+ start_date DATE NOT NULL,
+ end_date DATE NOT NULL,
+ visibility ENUM(&#x27;public&#x27;,&#x27;private&#x27;) NOT NULL DEFAULT &#x27;private&#x27;,
+ cover VARCHAR(64) NOT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+ FOREIGN KEY(category_id) REFERENCES categories(category_id),
+ INDEX dates_visibility(visibility,start_date,end_date),
+ INDEX owner(user_id)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS trip_places (
+ place_id INT AUTO_INCREMENT PRIMARY KEY,
+ trip_id INT NOT NULL,
+ name VARCHAR(150) NOT NULL,
+ province VARCHAR(100) NOT NULL,
+ visit_date DATE NOT NULL,
+ story TEXT NOT NULL,
+ sort_order INT NOT NULL DEFAULT 1,
+ FOREIGN KEY(trip_id) REFERENCES trips(trip_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS place_photos (
+ photo_id INT AUTO_INCREMENT PRIMARY KEY,
+ place_id INT NOT NULL,
+ filename VARCHAR(64) NOT NULL UNIQUE,
+ FOREIGN KEY(place_id) REFERENCES trip_places(place_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS bookmarks (
+ user_id INT NOT NULL,
+ trip_id INT NOT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY(user_id,trip_id),
+ FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+ FOREIGN KEY(trip_id) REFERENCES trips(trip_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+INSERT IGNORE INTO categories(category_id,name) VALUES
+(1,&#x27;ธรรมชาติและภูเขา&#x27;),(2,&#x27;ทะเลและชายหาด&#x27;),(3,&#x27;วัฒนธรรมและเมือง&#x27;),(4,&#x27;คาเฟ่และอาหาร&#x27;),(5,&#x27;ผจญภัย&#x27;);
+</code>
+</pre>
+</details>
+<details id="f2">
+    <summary>includes/init.php</summary>
+    <pre>
+        <code>&lt;?php
+// ทุกหน้าเรียกไฟล์นี้ก่อนแสดง HTML: เริ่ม Session และเชื่อมต่อ db.php
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set(&quot;session.use_strict_mode&quot;, &quot;1&quot;);
+    session_set_cookie_params([
+        &quot;httponly&quot; =&gt; true,
+        &quot;secure&quot; =&gt; !empty($_SERVER[&quot;HTTPS&quot;]) &amp;&amp; $_SERVER[&quot;HTTPS&quot;] !== &quot;off&quot;,
+        &quot;samesite&quot; =&gt; &quot;Lax&quot;,
+        &quot;path&quot; =&gt; &quot;/&quot;,
+    ]);
+    session_start();
+}
+date_default_timezone_set(&quot;Asia/Bangkok&quot;);
+require_once dirname(__DIR__) . &quot;/db.php&quot;;
+header(&quot;Cache-Control: no-store&quot;);
+header(&quot;X-Content-Type-Options: nosniff&quot;);
+header(&quot;X-Frame-Options: DENY&quot;);
+header(
+    &quot;Content-Security-Policy: default-src &#x27;self&#x27;; img-src &#x27;self&#x27;; style-src &#x27;self&#x27;; script-src &#x27;none&#x27;; frame-ancestors &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;self&#x27;&quot;,
+);
+$_SESSION[&quot;csrf&quot;] = $_SESSION[&quot;csrf&quot;] ?? bin2hex(random_bytes(32));
+// หากติดตั้งใน xampp/htdocs/paibaekpea รูปจะอยู่ใน xampp/paibaekpea-private-uploads
+$projectRoot = dirname(__DIR__);
+$privatePath =
+    getenv(&quot;UPLOAD_DIR&quot;) ?:
+    dirname($projectRoot, 2) . &quot;/paibaekpea-private-uploads&quot;;
+if (
+    !is_dir($privatePath) &amp;&amp;
+    !mkdir($privatePath, 0750, true) &amp;&amp;
+    !is_dir($privatePath)
+) {
+    http_response_code(500);
+    exit(&quot;สร้างโฟลเดอร์เก็บรูปไม่ได้ ตรวจสิทธิ์โฟลเดอร์หรือกำหนด UPLOAD_DIR&quot;);
+}
+define(&quot;UPLOAD_DIR&quot;, $privatePath);
+require_once __DIR__ . &quot;/helpers.php&quot;;
+</code>
+</pre>
+</details>
+<details id="f3">
+    <summary>includes/helpers.php</summary><pre><code>&lt;?php
+function h($value)
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, &quot;UTF-8&quot;);
+}
+function user_id()
+{
+    return (int) ($_SESSION[&quot;user_id&quot;] ?? 0);
+}
+function go($url)
+{
+    header(&quot;Location: &quot; . $url);
+    exit();
+}
+function csrf_field()
+{
+    echo &#x27;&lt;input type=&quot;hidden&quot; name=&quot;csrf&quot; value=&quot;&#x27; .
+        h($_SESSION[&quot;csrf&quot;]) .
+        &#x27;&quot;&gt;&#x27;;
+}
+function check_csrf()
+{
+    $token = $_POST[&quot;csrf&quot;] ?? &quot;&quot;;
+    if (!is_string($token) || !hash_equals($_SESSION[&quot;csrf&quot;], $token)) {
+        http_response_code(403);
+        exit(&quot;คำขอหมดอายุ กรุณาเปิดหน้าแบบฟอร์มใหม่&quot;);
+    }
+}
+function require_login()
+{
+    if (!user_id()) {
+        $next = basename($_SERVER[&quot;SCRIPT_NAME&quot;]);
+        if (isset($_GET[&quot;id&quot;])) {
+            $next .= &quot;?id=&quot; . (int) $_GET[&quot;id&quot;];
+        } elseif (isset($_GET[&quot;trip_id&quot;])) {
+            $next .= &quot;?trip_id=&quot; . (int) $_GET[&quot;trip_id&quot;];
+        }
+        $_SESSION[&quot;next&quot;] = $next;
+        go(&quot;login.php&quot;);
+    }
+}
+function safe_next($next)
+{
+    return preg_match(
+        &quot;/\A(?:index|my_trips|bookmarks|add_trip|edit_trip|trip_detail|add_place|edit_place|place_view|profile|edit_profile)\.php(?:\?(?:id|trip_id)=\d+)?\z/&quot;,
+        (string) $next,
+    )
+        ? $next
+        : &quot;my_trips.php&quot;;
+}
+function flash($message)
+{
+    $_SESSION[&quot;flash&quot;] = $message;
+}
+function not_found()
+{
+    http_response_code(404);
+    $page_title = &quot;ไม่พบข้อมูล&quot;;
+    require __DIR__ . &quot;/header.php&quot;;
+    echo &#x27;&lt;section class=&quot;panel empty&quot;&gt;&lt;h1&gt;ไม่พบข้อมูลหรือไม่มีสิทธิ์เข้าถึง&lt;/h1&gt;&lt;p&gt;เรื่องราวอาจถูกลบหรือเปลี่ยนเป็นส่วนตัว&lt;/p&gt;&lt;a class=&quot;btn&quot; href=&quot;index.php&quot;&gt;กลับไปสำรวจ&lt;/a&gt;&lt;/section&gt;&#x27;;
+    require __DIR__ . &quot;/footer.php&quot;;
+    exit();
+}
+function get_trip($trip_id, $owner_only = false)
+{
+    global $conn;
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT t.*, u.fullname, u.username, u.avatar, c.name AS category_name FROM trips t JOIN users u ON t.user_id=u.user_id JOIN categories c ON t.category_id=c.category_id WHERE t.trip_id=?&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+    $stmt-&gt;execute();
+    $trip = $stmt-&gt;get_result()-&gt;fetch_assoc();
+    $stmt-&gt;close();
+    $owner = $trip &amp;&amp; (int) $trip[&quot;user_id&quot;] === user_id();
+    if (
+        !$trip ||
+        ($owner_only &amp;&amp; !$owner) ||
+        ($trip[&quot;visibility&quot;] === &quot;private&quot; &amp;&amp; !$owner)
+    ) {
+        not_found();
+    }
+    return $trip;
+}
+function get_place($place_id, $owner_only = false)
+{
+    global $conn;
+    $stmt = $conn-&gt;prepare(&quot;SELECT * FROM trip_places WHERE place_id=?&quot;);
+    $stmt-&gt;bind_param(&quot;i&quot;, $place_id);
+    $stmt-&gt;execute();
+    $place = $stmt-&gt;get_result()-&gt;fetch_assoc();
+    $stmt-&gt;close();
+    if (!$place) {
+        not_found();
+    }
+    $trip = get_trip((int) $place[&quot;trip_id&quot;], $owner_only);
+    return [$place, $trip];
+}
+function photos_for($place_id)
+{
+    global $conn;
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT * FROM place_photos WHERE place_id=? ORDER BY photo_id&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;i&quot;, $place_id);
+    $stmt-&gt;execute();
+    $photos = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+    $stmt-&gt;close();
+    return $photos;
+}
+function text_value($name, $max, $required = false)
+{
+    $value = $_POST[$name] ?? &quot;&quot;;
+    if (!is_string($value)) {
+        throw new RuntimeException(&quot;รูปแบบข้อมูลไม่ถูกต้อง&quot;);
+    }
+    $value = trim($value);
+    if (($required &amp;&amp; $value === &quot;&quot;) || mb_strlen($value) &gt; $max) {
+        throw new RuntimeException(
+            &quot;กรุณากรอกข้อมูลให้ครบและไม่เกินความยาวที่กำหนด&quot;,
+        );
+    }
+    return $value;
+}
+function valid_date($value)
+{
+    if (!is_string($value)) {
+        return false;
+    }
+    $d = DateTimeImmutable::createFromFormat(&quot;!Y-m-d&quot;, $value);
+    return $d &amp;&amp;
+        $d-&gt;format(&quot;Y-m-d&quot;) === $value &amp;&amp;
+        $value &gt;= &quot;1900-01-01&quot; &amp;&amp;
+        $value &lt;= &quot;2200-12-31&quot;;
+}
+function trip_input()
+{
+    global $conn;
+    $title = text_value(&quot;title&quot;, 150, true);
+    $description = text_value(&quot;description&quot;, 5000);
+    $start = text_value(&quot;start_date&quot;, 10, true);
+    $end = text_value(&quot;end_date&quot;, 10, true);
+    $visibility = text_value(&quot;visibility&quot;, 10, true);
+    $category = (int) ($_POST[&quot;category_id&quot;] ?? 0);
+    if (!valid_date($start) || !valid_date($end) || $start &gt; $end) {
+        throw new RuntimeException(&quot;ช่วงวันที่เดินทางไม่ถูกต้อง&quot;);
+    }
+    if (!in_array($visibility, [&quot;public&quot;, &quot;private&quot;], true)) {
+        throw new RuntimeException(&quot;กรุณาเลือกความเป็นส่วนตัว&quot;);
+    }
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT category_id FROM categories WHERE category_id=?&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;i&quot;, $category);
+    $stmt-&gt;execute();
+    if (!$stmt-&gt;get_result()-&gt;fetch_assoc()) {
+        throw new RuntimeException(&quot;ไม่พบประเภทการท่องเที่ยว&quot;);
+    }
+    $stmt-&gt;close();
+    return [$title, $description, $start, $end, $visibility, $category];
+}
+function place_input($trip)
+{
+    $name = text_value(&quot;name&quot;, 150, true);
+    $province = text_value(&quot;province&quot;, 100, true);
+    $date = text_value(&quot;visit_date&quot;, 10, true);
+    $story = text_value(&quot;story&quot;, 10000);
+    $order = (int) ($_POST[&quot;sort_order&quot;] ?? 1);
+    if (
+        !valid_date($date) ||
+        $date &lt; $trip[&quot;start_date&quot;] ||
+        $date &gt; $trip[&quot;end_date&quot;]
+    ) {
+        throw new RuntimeException(&quot;วันที่ไปเยือนต้องอยู่ในช่วงการเดินทาง&quot;);
+    }
+    if ($order &lt; 1 || $order &gt; 1000) {
+        throw new RuntimeException(&quot;ลำดับต้องอยู่ระหว่าง 1–1000&quot;);
+    }
+    return [$name, $province, $date, $story, $order];
+}
+function error_message($error)
+{
+    if ($error instanceof mysqli_sql_exception) {
+        error_log($error-&gt;getMessage());
+        return &quot;บันทึกฐานข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง&quot;;
+    }
+    return $error instanceof RuntimeException
+        ? $error-&gt;getMessage()
+        : &quot;เกิดข้อผิดพลาด กรุณาลองอีกครั้ง&quot;;
+}
+function clean_files($files)
+{
+    foreach (array_unique($files) as $file) {
+        if (!$file) {
+            continue;
+        }
+        $path = UPLOAD_DIR . &quot;/&quot; . basename($file);
+        if (is_file($path) &amp;&amp; !unlink($path)) {
+            error_log(&quot;ลบไฟล์ไม่ได้: &quot; . $path);
+        }
+    }
+}
+function upload_photo($file, &amp;$created, $required = false)
+{
+    $error = (int) ($file[&quot;error&quot;] ?? UPLOAD_ERR_NO_FILE);
+    if ($error === UPLOAD_ERR_NO_FILE &amp;&amp; !$required) {
+        return null;
+    }
+    if ($error !== UPLOAD_ERR_OK) {
+        throw new RuntimeException(&quot;กรุณาเลือกรูป หรือรูปอัปโหลดไม่สำเร็จ&quot;);
+    }
+    if (
+        (int) $file[&quot;size&quot;] &gt; 5 * 1024 * 1024 ||
+        !is_uploaded_file($file[&quot;tmp_name&quot;])
+    ) {
+        throw new RuntimeException(&quot;ไฟล์รูปแต่ละไฟล์ต้องไม่เกิน 5 MB&quot;);
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))-&gt;file($file[&quot;tmp_name&quot;]);
+    $types = [
+        &quot;image/jpeg&quot; =&gt; &quot;jpg&quot;,
+        &quot;image/png&quot; =&gt; &quot;png&quot;,
+        &quot;image/webp&quot; =&gt; &quot;webp&quot;,
+    ];
+    $dimensions = @getimagesize($file[&quot;tmp_name&quot;]);
+    if (
+        !isset($types[$mime]) ||
+        !$dimensions ||
+        $dimensions[0] * $dimensions[1] &gt; 25000000
+    ) {
+        throw new RuntimeException(
+            &quot;รองรับ JPG PNG WebP และขนาดภาพไม่เกิน 25 ล้านพิกเซล&quot;,
+        );
+    }
+    $name = bin2hex(random_bytes(24)) . &quot;.&quot; . $types[$mime];
+    if (!move_uploaded_file($file[&quot;tmp_name&quot;], UPLOAD_DIR . &quot;/&quot; . $name)) {
+        throw new RuntimeException(&quot;เขียนไฟล์รูปภาพไม่ได้&quot;);
+    }
+    $created[] = $name;
+    return $name;
+}
+function add_photos($place_id, &amp;$created)
+{
+    global $conn;
+    $files = $_FILES[&quot;photos&quot;] ?? [];
+    $errors = $files[&quot;error&quot;] ?? [];
+    $count = count(photos_for($place_id));
+    foreach ($errors as $i =&gt; $error) {
+        if ((int) $error === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        if (++$count &gt; 10) {
+            throw new RuntimeException(&quot;แต่ละสถานที่มีรูปได้ไม่เกิน 10 รูป&quot;);
+        }
+        $file = [
+            &quot;error&quot; =&gt; $error,
+            &quot;size&quot; =&gt; $files[&quot;size&quot;][$i] ?? 0,
+            &quot;tmp_name&quot; =&gt; $files[&quot;tmp_name&quot;][$i] ?? &quot;&quot;,
+        ];
+        $filename = upload_photo($file, $created, true);
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO place_photos(place_id,filename) VALUES(?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;is&quot;, $place_id, $filename);
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+    }
+}
+function bookmark_trip($trip_id)
+{
+    global $conn;
+    $uid = user_id();
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT user_id FROM trips WHERE trip_id=? AND visibility=&#x27;public&#x27;&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+    $stmt-&gt;execute();
+    $trip = $stmt-&gt;get_result()-&gt;fetch_assoc();
+    $stmt-&gt;close();
+    if (!$trip || (int) $trip[&quot;user_id&quot;] === $uid) {
+        return false;
+    }
+    $stmt = $conn-&gt;prepare(
+        &quot;INSERT IGNORE INTO bookmarks(user_id,trip_id) VALUES(?,?)&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;ii&quot;, $uid, $trip_id);
+    $stmt-&gt;execute();
+    $stmt-&gt;close();
+    return true;
+}
+</code>
+</pre>
+</details>
+<details id="f4">
+    <summary>includes/header.php</summary>
+    <pre>
+        <code>&lt;!doctype html&gt;
+&lt;html lang=&quot;th&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+    &lt;title&gt;&lt;?= h($page_title ?? &quot;สำรวจทริป&quot;) ?&gt; | PaiBaekPea&lt;/title&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header class=&quot;site-header&quot;&gt;
+    &lt;a class=&quot;brand&quot; href=&quot;index.php&quot;&gt;&lt;strong&gt;PaiBaekPea&lt;/strong&gt;&lt;small&gt;พักบั๊ก ไปแบกเป้&lt;/small&gt;&lt;/a&gt;
+    &lt;nav aria-label=&quot;เมนูหลัก&quot;&gt;
+        &lt;a href=&quot;index.php&quot;&gt;สำรวจ&lt;/a&gt;
+        &lt;?php if (user_id()): ?&gt;
+            &lt;a href=&quot;my_trips.php&quot;&gt;บันทึกของฉัน&lt;/a&gt;
+            &lt;a href=&quot;bookmarks.php&quot;&gt;ทริปที่สนใจ&lt;/a&gt;
+            &lt;a href=&quot;profile.php?id=&lt;?= user_id() ?&gt;&quot;&gt;โปรไฟล์&lt;/a&gt;
+            &lt;a class=&quot;btn small&quot; href=&quot;add_trip.php&quot;&gt;+ สร้างทริป&lt;/a&gt;
+            &lt;form method=&quot;post&quot; action=&quot;logout.php&quot;&gt;&lt;?php csrf_field(); ?&gt;&lt;button class=&quot;link-button&quot;&gt;ออกจากระบบ&lt;/button&gt;&lt;/form&gt;
+        &lt;?php else: ?&gt;
+            &lt;a href=&quot;login.php&quot;&gt;เข้าสู่ระบบ&lt;/a&gt;
+            &lt;a class=&quot;btn small&quot; href=&quot;register.php&quot;&gt;สมัครสมาชิก&lt;/a&gt;
+        &lt;?php endif; ?&gt;
+    &lt;/nav&gt;
+&lt;/header&gt;
+&lt;main class=&quot;container&quot;&gt;
+&lt;?php if (!empty($_SESSION[&quot;flash&quot;])): ?&gt;
+&lt;div class=&quot;notice&quot; role=&quot;status&quot;&gt;&lt;?= h($_SESSION[&quot;flash&quot;]) ?&gt;&lt;/div&gt;
+&lt;?php unset($_SESSION[&quot;flash&quot;]);endif; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f5">
+    <summary>includes/footer.php</summary>
+    <pre>
+        <code>&lt;/main&gt;
+&lt;footer class=&quot;site-footer&quot;&gt;&lt;strong&gt;Pakbag PaiBaekPea&lt;/strong&gt;&lt;span&gt;เก็บเรื่องราวระหว่างทาง ให้กลับมาอ่านได้เสมอ&lt;/span&gt;&lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code>
+</pre>
+</details>
+<details id="f6">
+    <summary>style.css</summary>
+    <pre>
+        <code>:root {
+  --green: #174c3b;
+  --dark: #10392c;
+  --cream: #f6f5ef;
+  --text: #25362e;
+  --muted: #647168;
+  --line: #dde3da;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--text);
+  font:
+    16px/1.7 Tahoma,
+    Arial,
+    sans-serif;
+}
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #ac792e;
+  outline-offset: 3px;
+}
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+h1 {
+  font-size: clamp(28px, 3.6vw, 42px);
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+h2 {
+  font-size: 23px;
+  margin: 0 0 12px;
+}
+p {
+  margin: 10px 0;
+}
+.site-header {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  padding: 20px max(22px, calc((100% - 1180px) / 2));
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.brand strong {
+  font-size: 24px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+.brand small {
+  font-size: 13px;
+  color: var(--muted);
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+  font-size: 14px;
+}
+nav form {
+  margin: 0;
+}
+.container {
+  width: min(1180px, calc(100% - 40px));
+  margin: auto;
+  padding: 40px 0 60px;
+  min-height: 75vh;
+}
+.page-heading {
+  margin-bottom: 30px;
+}
+.heading-row,
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.section-heading {
+  margin: 32px 0 22px;
+}
+.eyebrow {
+  font-size: 13px;
+  font-weight: bold;
+  color: #597160;
+  letter-spacing: 1.2px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: white;
+  border: 1px solid var(--green);
+  border-radius: 9px;
+  padding: 11px 19px;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.btn:hover {
+  background: var(--dark);
+  text-decoration: none;
+}
+.btn.secondary {
+  background: white;
+  border-color: #cbd6cd;
+  color: var(--green);
+}
+.btn.secondary:hover {
+  background: #edf2e8;
+}
+.btn.small {
+  font-size: 14px;
+  padding: 8px 12px;
+}
+.btn.full {
+  width: 100%;
+  margin-top: 24px;
+}
+.btn.danger {
+  background: #a63b32;
+  border-color: #a63b32;
+}
+.link-button {
+  border: 0;
+  color: var(--green);
+  background: none;
+  padding: 8px;
+  font-size: 14px;
+}
+.panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.auth-panel {
+  max-width: 480px;
+  margin: 25px auto;
+}
+.auth-link {
+  text-align: center;
+  margin-top: 25px;
+}
+.narrow {
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+label {
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  margin: 17px 0 6px;
+}
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 13px;
+  background: white;
+  border: 1px solid #cbd6cd;
+  border-radius: 8px;
+  color: var(--text);
+}
+textarea {
+  resize: vertical;
+}
+input[type=&quot;checkbox&quot;] {
+  display: inline-block;
+  width: auto;
+  margin-right: 6px;
+  accent-color: var(--green);
+}
+input[type=&quot;file&quot;] {
+  font-size: 14px;
+}
+input[type=&quot;file&quot;]::file-selector-button {
+  border: 0;
+  background: #e8eee4;
+  color: var(--green);
+  border-radius: 5px;
+  padding: 7px 12px;
+  margin-right: 10px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 22px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.filters label {
+  margin: 0;
+}
+.filters .grow {
+  flex: 1;
+  min-width: 220px;
+}
+.filters input,
+.filters select {
+  margin-top: 6px;
+}
+.filters input[type=&quot;number&quot;] {
+  max-width: 145px;
+}
+.trip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.trip-card {
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.trip-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px #17372212;
+}
+.card-cover {
+  display: block;
+  width: 100%;
+  height: 225px;
+  object-fit: cover;
+  background: #e6ecdf;
+}
+.card-body {
+  padding: 20px;
+}
+.card-body h2 {
+  font-size: 21px;
+}
+.excerpt {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--muted);
+}
+.author {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 18px;
+  font-size: 14px;
+}
+.badge {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--green);
+  background: #e8eee3;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.error,
+.notice {
+  padding: 15px;
+  border-radius: 9px;
+  margin: 18px 0;
+}
+.error {
+  background: #fff0eb;
+  color: #8b3327;
+  border: 1px solid #e0b3a7;
+}
+.notice {
+  background: #e8f2e6;
+  color: var(--green);
+  border: 1px solid #c5d8bd;
+}
+.empty {
+  text-align: center;
+  padding: 55px 20px;
+}
+.detail-cover {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  border-radius: 15px;
+}
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.story {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 22px 0;
+}
+.timeline {
+  border-left: 2px solid #cbd8c3;
+  padding-left: 25px;
+  margin-top: 30px;
+}
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.photo-grid img {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 9px;
+}
+.photo-grid label {
+  margin: 0;
+}
+.check {
+  display: block;
+  margin-top: 12px;
+}
+.preview {
+  width: min(100%, 450px);
+  max-height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.profile-panel {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+.profile-panel &gt; .btn {
+  margin-left: auto;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-top: 15px;
+}
+.initials {
+  background: #e4ebdf;
+  color: #315f47;
+  font-size: 38px;
+  font-weight: bold;
+}
+.saved-list {
+  margin-top: 30px;
+}
+.saved-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.site-footer {
+  border-top: 1px solid var(--line);
+  padding: 25px max(22px, calc((100% - 1180px) / 2));
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 14px;
+  color: var(--muted);
+}
+@media (max-width: 950px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .trip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .profile-panel {
+    flex-wrap: wrap;
+  }
+  .profile-panel &gt; .btn {
+    margin-left: 0;
+  }
+}
+@media (max-width: 600px) {
+  .container {
+    width: calc(100% - 28px);
+    padding-top: 25px;
+  }
+  .site-header {
+    padding: 16px;
+  }
+  nav {
+    gap: 10px 15px;
+  }
+  .heading-row,
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .trip-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .panel {
+    padding: 20px;
+  }
+  .filters {
+    padding: 16px;
+  }
+  .filters label {
+    width: 100%;
+  }
+  .filters input[type=&quot;number&quot;] {
+    max-width: none;
+  }
+  .filters .btn {
+    flex: 1;
+  }
+  .timeline {
+    padding-left: 12px;
+  }
+  .photo-grid {
+    gap: 10px;
+  }
+  .photo-grid img {
+    height: 140px;
+  }
+  .detail-cover {
+    max-height: 320px;
+  }
+  .site-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .saved-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+</code>
+</pre>
+</details>
+<details id="f7">
+    <summary>register.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+if (user_id()) {
+    go(&quot;my_trips.php&quot;);
+}
+$message = &quot;&quot;;
+$username = &quot;&quot;;
+$email = &quot;&quot;;
+$fullname = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    try {
+        $username = text_value(&quot;username&quot;, 30, true);
+        $email = strtolower(text_value(&quot;email&quot;, 190, true));
+        $fullname = text_value(&quot;fullname&quot;, 100, true);
+        $password = $_POST[&quot;password&quot;] ?? &quot;&quot;;
+        if (!is_string($password)) {
+            throw new RuntimeException(&quot;รหัสผ่านไม่ถูกต้อง&quot;);
+        }
+        $confirm = (string) ($_POST[&quot;confirm_password&quot;] ?? &quot;&quot;);
+        if (!preg_match(&#x27;/^[A-Za-z0-9_]{3,30}$/&#x27;, $username)) {
+            throw new RuntimeException(
+                &quot;ชื่อผู้ใช้เป็นอักษรอังกฤษ ตัวเลข หรือ _ จำนวน 3–30 ตัว&quot;,
+            );
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException(&quot;อีเมลไม่ถูกต้อง&quot;);
+        }
+        if (strlen($password) &lt; 8 || strlen($password) &gt; 72) {
+            throw new RuntimeException(&quot;รหัสผ่านต้องมี 8–72 ไบต์&quot;);
+        }
+        if ($password !== $confirm) {
+            throw new RuntimeException(&quot;รหัสผ่านทั้งสองช่องไม่ตรงกัน&quot;);
+        }
+        $check = $conn-&gt;prepare(
+            &quot;SELECT user_id FROM users WHERE username=? OR email=?&quot;,
+        );
+        $check-&gt;bind_param(&quot;ss&quot;, $username, $email);
+        $check-&gt;execute();
+        if ($check-&gt;get_result()-&gt;num_rows) {
+            throw new RuntimeException(&quot;ชื่อผู้ใช้หรืออีเมลนี้มีผู้ใช้งานแล้ว&quot;);
+        }
+        $check-&gt;close();
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $bio = &quot;&quot;;
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO users(username,email,password,fullname,bio) VALUES(?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;sssss&quot;,
+            $username,
+            $email,
+            $hashed_password,
+            $fullname,
+            $bio,
+        );
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        flash(&quot;สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบเพื่อทำรายการต่อ&quot;);
+        go(&quot;login.php&quot;);
+    } catch (Throwable $error) {
+        $message =
+            $error instanceof mysqli_sql_exception &amp;&amp; $error-&gt;getCode() === 1062
+                ? &quot;ชื่อผู้ใช้หรืออีเมลซ้ำ&quot;
+                : error_message($error);
+    }
+}
+$page_title = &quot;สมัครสมาชิก&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel auth-panel&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;JOIN THE JOURNEY&lt;/p&gt;&lt;h1&gt;สมัครสมาชิก&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;เริ่มบันทึกเรื่องราวของคุณ&lt;/p&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot;&gt;&lt;?php csrf_field(); ?&gt;
+&lt;label for=&quot;username&quot;&gt;ชื่อผู้ใช้&lt;/label&gt;&lt;input id=&quot;username&quot; name=&quot;username&quot; value=&quot;&lt;?= h(
+    $username,
+) ?&gt;&quot; pattern=&quot;[A-Za-z0-9_]{3,30}&quot; maxlength=&quot;30&quot; autocomplete=&quot;username&quot; required&gt;
+&lt;label for=&quot;fullname&quot;&gt;ชื่อที่แสดง&lt;/label&gt;&lt;input id=&quot;fullname&quot; name=&quot;fullname&quot; value=&quot;&lt;?= h(
+    $fullname,
+) ?&gt;&quot; maxlength=&quot;100&quot; required&gt;
+&lt;label for=&quot;email&quot;&gt;อีเมล&lt;/label&gt;&lt;input id=&quot;email&quot; name=&quot;email&quot; type=&quot;email&quot; value=&quot;&lt;?= h(
+    $email,
+) ?&gt;&quot; maxlength=&quot;190&quot; autocomplete=&quot;email&quot; required&gt;
+&lt;label for=&quot;password&quot;&gt;รหัสผ่าน (8–72 ไบต์)&lt;/label&gt;&lt;input id=&quot;password&quot; name=&quot;password&quot; type=&quot;password&quot; minlength=&quot;8&quot; maxlength=&quot;72&quot; autocomplete=&quot;new-password&quot; required&gt;
+&lt;label for=&quot;confirm&quot;&gt;ยืนยันรหัสผ่าน&lt;/label&gt;&lt;input id=&quot;confirm&quot; name=&quot;confirm_password&quot; type=&quot;password&quot; autocomplete=&quot;new-password&quot; required&gt;
+&lt;button class=&quot;btn full&quot;&gt;สมัครสมาชิก&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;auth-link&quot;&gt;มีบัญชีแล้ว? &lt;a href=&quot;login.php&quot;&gt;เข้าสู่ระบบ&lt;/a&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f8">
+    <summary>login.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+if (user_id()) {
+    go(&quot;my_trips.php&quot;);
+}
+$message = &quot;&quot;;
+$email = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    // จำกัดการลองผิดภายใน Session นี้ (ไม่ใช่ distributed/IP rate limiter)
+    $attempt = $_SESSION[&quot;login_attempt&quot;] ?? [
+        &quot;count&quot; =&gt; 0,
+        &quot;until&quot; =&gt; time() + 900,
+    ];
+    if ($attempt[&quot;until&quot;] &lt; time()) {
+        $attempt = [&quot;count&quot; =&gt; 0, &quot;until&quot; =&gt; time() + 900];
+    }
+    if ($attempt[&quot;count&quot;] &gt;= 10) {
+        $message = &quot;ลองเข้าสู่ระบบหลายครั้ง กรุณารอ 15 นาที&quot;;
+    } else {
+        $email = strtolower(trim((string) ($_POST[&quot;email&quot;] ?? &quot;&quot;)));
+        $password = (string) ($_POST[&quot;password&quot;] ?? &quot;&quot;);
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT user_id,fullname,password FROM users WHERE email=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;s&quot;, $email);
+        $stmt-&gt;execute();
+        $user = $stmt-&gt;get_result()-&gt;fetch_assoc();
+        $stmt-&gt;close();
+        if (
+            $user &amp;&amp;
+            strlen($password) &lt;= 72 &amp;&amp;
+            password_verify($password, $user[&quot;password&quot;])
+        ) {
+            session_regenerate_id(true);
+            $_SESSION[&quot;user_id&quot;] = (int) $user[&quot;user_id&quot;];
+            $_SESSION[&quot;fullname&quot;] = $user[&quot;fullname&quot;];
+            $_SESSION[&quot;csrf&quot;] = bin2hex(random_bytes(32));
+            unset($_SESSION[&quot;login_attempt&quot;]);
+            $next = safe_next($_SESSION[&quot;next&quot;] ?? &quot;my_trips.php&quot;);
+            unset($_SESSION[&quot;next&quot;]);
+            $pending = (int) ($_SESSION[&quot;pending_bookmark&quot;] ?? 0);
+            unset($_SESSION[&quot;pending_bookmark&quot;]);
+            if ($pending) {
+                flash(
+                    bookmark_trip($pending)
+                        ? &quot;เข้าสู่ระบบและบันทึกทริปแล้ว&quot;
+                        : &quot;เข้าสู่ระบบแล้ว แต่ทริปที่เลือกไม่สามารถบันทึกได้&quot;,
+                );
+                $next = &quot;bookmarks.php&quot;;
+            } else {
+                flash(&quot;เข้าสู่ระบบสำเร็จ&quot;);
+            }
+            go($next);
+        }
+        $attempt[&quot;count&quot;]++;
+        $_SESSION[&quot;login_attempt&quot;] = $attempt;
+        $message = &quot;อีเมลหรือรหัสผ่านไม่ถูกต้อง&quot;;
+    }
+}
+$page_title = &quot;เข้าสู่ระบบ&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel auth-panel&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;WELCOME BACK&lt;/p&gt;&lt;h1&gt;ยินดีต้อนรับกลับมา&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;กลับไปหาความทรงจำของคุณ&lt;/p&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot;&gt;&lt;?php csrf_field(); ?&gt;
+&lt;label for=&quot;email&quot;&gt;อีเมล&lt;/label&gt;&lt;input id=&quot;email&quot; name=&quot;email&quot; type=&quot;email&quot; value=&quot;&lt;?= h(
+    $email,
+) ?&gt;&quot; autocomplete=&quot;email&quot; required&gt;
+&lt;label for=&quot;password&quot;&gt;รหัสผ่าน&lt;/label&gt;&lt;input id=&quot;password&quot; name=&quot;password&quot; type=&quot;password&quot; autocomplete=&quot;current-password&quot; required&gt;
+&lt;button class=&quot;btn full&quot;&gt;เข้าสู่ระบบ&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;auth-link&quot;&gt;ยังไม่มีบัญชี? &lt;a href=&quot;register.php&quot;&gt;สมัครสมาชิก&lt;/a&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f9">
+    <summary>logout.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] !== &quot;POST&quot;) {
+    http_response_code(405);
+    header(&quot;Allow: POST&quot;);
+    exit(&quot;กรุณากดออกจากระบบจากเมนู&quot;);
+}
+check_csrf();
+$_SESSION = [];
+session_regenerate_id(true);
+$_SESSION[&quot;csrf&quot;] = bin2hex(random_bytes(32));
+flash(&quot;ออกจากระบบแล้ว&quot;);
+go(&quot;index.php&quot;);
+</code>
+</pre>
+</details>
+<details id="f10">
+    <summary>index.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+// เหมือนหน้าแสดงคอร์สเดิม แต่เลือกเฉพาะทริปสาธารณะ
+$q = trim((string) ($_GET[&quot;q&quot;] ?? &quot;&quot;));
+$category_id = (int) ($_GET[&quot;category_id&quot;] ?? 0);
+$keyword = &quot;%&quot; . $q . &quot;%&quot;;
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT t.*,u.fullname,c.name AS category_name FROM trips t JOIN users u ON t.user_id=u.user_id JOIN categories c ON t.category_id=c.category_id WHERE t.visibility=&#x27;public&#x27; AND (?=0 OR t.category_id=?) AND (t.title LIKE ? OR EXISTS(SELECT 1 FROM trip_places p WHERE p.trip_id=t.trip_id AND (p.name LIKE ? OR p.province LIKE ?))) ORDER BY t.start_date DESC,t.trip_id DESC&quot;,
+);
+$stmt-&gt;bind_param(
+    &quot;iisss&quot;,
+    $category_id,
+    $category_id,
+    $keyword,
+    $keyword,
+    $keyword,
+);
+$stmt-&gt;execute();
+$trips = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+$stmt-&gt;close();
+$categories = $conn
+    -&gt;query(&quot;SELECT * FROM categories ORDER BY category_id&quot;)
+    -&gt;fetch_all(MYSQLI_ASSOC);
+$page_title = &quot;สำรวจทริป&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;EXPLORE THE JOURNEY&lt;/p&gt;&lt;h1&gt;ออกไปพบเรื่องราวใหม่ ๆ&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;พักจากหน้าจอ แล้วออกไปเขียนความทรงจำของคุณ&lt;/p&gt;&lt;/section&gt;
+&lt;form class=&quot;filters&quot; method=&quot;get&quot;&gt;
+&lt;label class=&quot;grow&quot; for=&quot;q&quot;&gt;ค้นหาทริป&lt;input id=&quot;q&quot; name=&quot;q&quot; maxlength=&quot;100&quot; value=&quot;&lt;?= h(
+    $q,
+) ?&gt;&quot; placeholder=&quot;ชื่อทริป สถานที่ หรือจังหวัด&quot;&gt;&lt;/label&gt;
+&lt;label for=&quot;category&quot;&gt;ประเภท&lt;select id=&quot;category&quot; name=&quot;category_id&quot;&gt;&lt;option value=&quot;0&quot;&gt;ทั้งหมด&lt;/option&gt;&lt;?php foreach (
+    $categories
+    as $c
+): ?&gt;&lt;option value=&quot;&lt;?= (int) $c[&quot;category_id&quot;] ?&gt;&quot; &lt;?= $category_id ===
+(int) $c[&quot;category_id&quot;]
+    ? &quot;selected&quot;
+    : &quot;&quot; ?&gt;&gt;&lt;?= h($c[&quot;name&quot;]) ?&gt;&lt;/option&gt;&lt;?php endforeach; ?&gt;&lt;/select&gt;&lt;/label&gt;
+&lt;button class=&quot;btn&quot;&gt;ค้นหา&lt;/button&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;index.php&quot;&gt;ล้างตัวกรอง&lt;/a&gt;
+&lt;/form&gt;
+&lt;div class=&quot;section-heading&quot;&gt;&lt;h2&gt;เรื่องราวจากเพื่อนร่วมทาง&lt;/h2&gt;&lt;span class=&quot;muted&quot;&gt;&lt;?= count(
+    $trips,
+) ?&gt; ทริป&lt;/span&gt;&lt;/div&gt;
+&lt;?php
+require &quot;includes/cards.php&quot;;
+require &quot;includes/footer.php&quot;;
+
+?&gt;
+</code>
+</pre>
+</details>
+<details id="f11">
+    <summary>my_trips.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$uid = user_id();
+$q = trim((string) ($_GET[&quot;q&quot;] ?? &quot;&quot;));
+$keyword = &quot;%&quot; . $q . &quot;%&quot;;
+$year = (int) ($_GET[&quot;year&quot;] ?? 0);
+$month = (int) ($_GET[&quot;month&quot;] ?? 0);
+$message = &quot;&quot;;
+$trips = [];
+$first = &quot;1900-01-01&quot;;
+$last = &quot;2200-12-31&quot;;
+if (
+    ($year &amp;&amp; ($year &lt; 1900 || $year &gt; 2200)) ||
+    $month &lt; 0 ||
+    $month &gt; 12 ||
+    ($month &amp;&amp; !$year)
+) {
+    $message = &quot;กรุณาเลือกปี ค.ศ. และเดือนให้ถูกต้อง&quot;;
+} else {
+    if ($year) {
+        $first = sprintf(&quot;%04d-%02d-01&quot;, $year, $month ?: 1);
+        $last = $month ? date(&quot;Y-m-t&quot;, strtotime($first)) : $year . &quot;-12-31&quot;;
+    }
+    // ใช้ช่วงทับซ้อน ไม่ใช้ created_at
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT t.*,u.fullname,c.name AS category_name FROM trips t JOIN users u ON t.user_id=u.user_id JOIN categories c ON t.category_id=c.category_id WHERE t.user_id=? AND t.start_date&lt;=? AND t.end_date&gt;=? AND (t.title LIKE ? OR EXISTS(SELECT 1 FROM trip_places p WHERE p.trip_id=t.trip_id AND (p.name LIKE ? OR p.province LIKE ?))) ORDER BY t.start_date DESC,t.trip_id DESC&quot;,
+    );
+    $stmt-&gt;bind_param(
+        &quot;isssss&quot;,
+        $uid,
+        $last,
+        $first,
+        $keyword,
+        $keyword,
+        $keyword,
+    );
+    $stmt-&gt;execute();
+    $trips = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+    $stmt-&gt;close();
+}
+$page_title = &quot;บันทึกของฉัน&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading heading-row&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;YOUR TRAVEL JOURNAL&lt;/p&gt;&lt;h1&gt;บันทึกของฉัน&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;ทุกจุดหมาย ทุกความทรงจำ ในพื้นที่ของคุณ&lt;/p&gt;&lt;/div&gt;&lt;a class=&quot;btn&quot; href=&quot;add_trip.php&quot;&gt;+ สร้างทริป&lt;/a&gt;&lt;/section&gt;
+&lt;form method=&quot;get&quot; class=&quot;filters&quot;&gt;&lt;label class=&quot;grow&quot;&gt;ค้นหา&lt;input name=&quot;q&quot; value=&quot;&lt;?= h(
+    $q,
+) ?&gt;&quot; placeholder=&quot;ชื่อทริป สถานที่ จังหวัด&quot;&gt;&lt;/label&gt;&lt;label&gt;ปี ค.ศ.&lt;input type=&quot;number&quot; name=&quot;year&quot; min=&quot;1900&quot; max=&quot;2200&quot; value=&quot;&lt;?= $year ?:
+    &quot;&quot; ?&gt;&quot; placeholder=&quot;2026&quot;&gt;&lt;/label&gt;&lt;label&gt;เดือน&lt;select name=&quot;month&quot;&gt;&lt;option value=&quot;0&quot;&gt;ทุกเดือน&lt;/option&gt;&lt;?php for (
+    $i = 1;
+    $i &lt;= 12;
+    $i++
+): ?&gt;&lt;option value=&quot;&lt;?= $i ?&gt;&quot; &lt;?= $month === $i
+    ? &quot;selected&quot;
+    : &quot;&quot; ?&gt;&gt;เดือน &lt;?= $i ?&gt;&lt;/option&gt;&lt;?php endfor; ?&gt;&lt;/select&gt;&lt;/label&gt;&lt;button class=&quot;btn&quot;&gt;กรองข้อมูล&lt;/button&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;my_trips.php&quot;&gt;ล้าง&lt;/a&gt;&lt;/form&gt;
+&lt;div class=&quot;section-heading&quot;&gt;&lt;h2&gt;การเดินทางของคุณ&lt;/h2&gt;&lt;span class=&quot;muted&quot;&gt;&lt;?= count(
+    $trips,
+) ?&gt; ทริป&lt;/span&gt;&lt;/div&gt;
+&lt;?php
+if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php else:require &quot;includes/cards.php&quot;;endif;
+require &quot;includes/footer.php&quot;;
+
+?&gt;
+</code>
+</pre>
+</details>
+<details id="f12">
+    <summary>add_trip.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$message = &quot;&quot;;
+$trip = [];
+$place = [];
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $created = [];
+    $transaction = false;
+    try {
+        [
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $category_id,
+        ] = trip_input();
+        [$name, $province, $visit, $story, $sort] = place_input([
+            &quot;start_date&quot; =&gt; $start,
+            &quot;end_date&quot; =&gt; $end,
+        ]);
+        $cover = upload_photo($_FILES[&quot;cover&quot;] ?? [], $created, true);
+        $uid = user_id();
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        // คอร์สเดิม -&gt; ทริป; instructor_id -&gt; user_id
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO trips(user_id,category_id,title,description,start_date,end_date,visibility,cover) VALUES(?,?,?,?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;iissssss&quot;,
+            $uid,
+            $category_id,
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $cover,
+        );
+        $stmt-&gt;execute();
+        $trip_id = $conn-&gt;insert_id;
+        $stmt-&gt;close();
+        // บันทึกสถานที่แรกพร้อมทริป เพื่อให้ทุกทริปมีอย่างน้อยหนึ่งสถานที่
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO trip_places(trip_id,name,province,visit_date,story,sort_order) VALUES(?,?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;issssi&quot;,
+            $trip_id,
+            $name,
+            $province,
+            $visit,
+            $story,
+            $sort,
+        );
+        $stmt-&gt;execute();
+        $place_id = $conn-&gt;insert_id;
+        $stmt-&gt;close();
+        add_photos($place_id, $created);
+        $conn-&gt;commit();
+        $transaction = false;
+        flash(&quot;สร้างทริปสำเร็จ เพิ่มสถานที่ต่อได้จากหน้ารายละเอียด&quot;);
+        go(&quot;trip_detail.php?id=&quot; . $trip_id);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        clean_files($created);
+        $message = error_message($error);
+    }
+}
+$categories = $conn
+    -&gt;query(&quot;SELECT * FROM categories ORDER BY category_id&quot;)
+    -&gt;fetch_all(MYSQLI_ASSOC);
+$page_title = &quot;สร้างทริป&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;WRITE YOUR JOURNEY&lt;/p&gt;&lt;h1&gt;บันทึกการเดินทางครั้งใหม่&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;เริ่มต้นด้วยทริปและสถานที่แรก แล้วค่อยเติมเรื่องราวระหว่างทาง&lt;/p&gt;&lt;/section&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt; · กรุณาเลือกไฟล์รูปใหม่อีกครั้ง&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;&lt;?php csrf_field(); ?&gt;
+&lt;section class=&quot;panel&quot;&gt;&lt;h2&gt;01 ข้อมูลทริป&lt;/h2&gt;&lt;?php require &quot;includes/trip_fields.php&quot;; ?&gt;&lt;/section&gt;
+&lt;section class=&quot;panel&quot;&gt;&lt;h2&gt;02 สถานที่แรก&lt;/h2&gt;&lt;?php require &quot;includes/place_fields.php&quot;; ?&gt;&lt;/section&gt;
+&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;my_trips.php&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn&quot;&gt;บันทึกทริป&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f13">
+    <summary>edit_trip.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$trip_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+$trip = get_trip($trip_id, true);
+$message = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $created = [];
+    $transaction = false;
+    try {
+        [
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $category_id,
+        ] = trip_input();
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT COUNT(*) AS total FROM trip_places WHERE trip_id=? AND (visit_date&lt;? OR visit_date&gt;?)&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;iss&quot;, $trip_id, $start, $end);
+        $stmt-&gt;execute();
+        if ($stmt-&gt;get_result()-&gt;fetch_assoc()[&quot;total&quot;]) {
+            throw new RuntimeException(
+                &quot;ช่วงวันที่ใหม่ไม่ครอบคลุมสถานที่เดิม กรุณาแก้วันที่ของสถานที่ก่อน&quot;,
+            );
+        }
+        $stmt-&gt;close();
+        $new_cover = upload_photo($_FILES[&quot;cover&quot;] ?? [], $created);
+        $cover = $new_cover ?? $trip[&quot;cover&quot;];
+        $uid = user_id();
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        $stmt = $conn-&gt;prepare(
+            &quot;UPDATE trips SET category_id=?,title=?,description=?,start_date=?,end_date=?,visibility=?,cover=? WHERE trip_id=? AND user_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;issssssii&quot;,
+            $category_id,
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $cover,
+            $trip_id,
+            $uid,
+        );
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        $conn-&gt;commit();
+        $transaction = false;
+        if ($new_cover) {
+            clean_files([$trip[&quot;cover&quot;]]);
+        }
+        flash(&quot;แก้ไขทริปแล้ว&quot;);
+        go(&quot;trip_detail.php?id=&quot; . $trip_id);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        clean_files($created);
+        $message = error_message($error);
+    }
+}
+$categories = $conn
+    -&gt;query(&quot;SELECT * FROM categories ORDER BY category_id&quot;)
+    -&gt;fetch_all(MYSQLI_ASSOC);
+$page_title = &quot;แก้ไขทริป&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;h1&gt;แก้ไขทริป&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;จัดการสถานที่และรูปสถานที่ได้จากหน้ารายละเอียดทริป&lt;/p&gt;&lt;/section&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form class=&quot;panel&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;&lt;?php
+csrf_field();
+require &quot;includes/trip_fields.php&quot;;
+?&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;trip_detail.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn&quot;&gt;บันทึกการแก้ไข&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f14">
+    <summary>trip_detail.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+$trip_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+$trip = get_trip($trip_id);
+$is_owner = (int) $trip[&quot;user_id&quot;] === user_id();
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT * FROM trip_places WHERE trip_id=? ORDER BY sort_order,place_id&quot;,
+);
+$stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+$stmt-&gt;execute();
+$places = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+$stmt-&gt;close();
+$uid = user_id();
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT user_id FROM bookmarks WHERE user_id=? AND trip_id=?&quot;,
+);
+$stmt-&gt;bind_param(&quot;ii&quot;, $uid, $trip_id);
+$stmt-&gt;execute();
+$saved = (bool) $stmt-&gt;get_result()-&gt;fetch_assoc();
+$stmt-&gt;close();
+$page_title = $trip[&quot;title&quot;];
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;a class=&quot;back-link&quot; href=&quot;index.php&quot;&gt;← กลับไปสำรวจ&lt;/a&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;&lt;?= h(
+    $trip[&quot;category_name&quot;],
+) ?&gt;&lt;/p&gt;&lt;h1&gt;&lt;?= h($trip[&quot;title&quot;]) ?&gt;&lt;/h1&gt;
+&lt;p class=&quot;story&quot;&gt;&lt;?= h($trip[&quot;description&quot;]) ?&gt;&lt;/p&gt;
+&lt;div class=&quot;detail-meta&quot;&gt;&lt;a href=&quot;profile.php?id=&lt;?= (int) $trip[
+    &quot;user_id&quot;
+] ?&gt;&quot;&gt;โดย &lt;?= h($trip[&quot;fullname&quot;]) ?&gt;&lt;/a&gt;&lt;span class=&quot;muted&quot;&gt;&lt;?= h(
+    $trip[&quot;start_date&quot;],
+) ?&gt; — &lt;?= h($trip[&quot;end_date&quot;]) ?&gt;&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;&lt;?= $trip[
+    &quot;visibility&quot;
+] === &quot;private&quot;
+    ? &quot;ส่วนตัว&quot;
+    : &quot;สาธารณะ&quot; ?&gt;&lt;/span&gt;&lt;/div&gt;
+&lt;div class=&quot;actions&quot;&gt;
+&lt;?php if (
+    $is_owner
+): ?&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;edit_trip.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;แก้ไขทริป&lt;/a&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;delete_trip.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ลบทริป&lt;/a&gt;
+&lt;?php else: ?&gt;&lt;form method=&quot;post&quot; action=&quot;bookmark.php&quot;&gt;&lt;?php csrf_field(); ?&gt;&lt;input type=&quot;hidden&quot; name=&quot;trip_id&quot; value=&quot;&lt;?= $trip_id ?&gt;&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;action&quot; value=&quot;&lt;?= $saved
+    ? &quot;remove&quot;
+    : &quot;add&quot; ?&gt;&quot;&gt;&lt;button class=&quot;btn&quot;&gt;&lt;?= $saved
+    ? &quot;บันทึกแล้ว · ยกเลิก&quot;
+    : &quot;บันทึกทริป&quot; ?&gt;&lt;/button&gt;&lt;/form&gt;&lt;?php endif; ?&gt;
+&lt;/div&gt;&lt;/section&gt;
+&lt;img class=&quot;detail-cover&quot; src=&quot;media.php?trip_id=&lt;?= $trip_id ?&gt;&quot; alt=&quot;&lt;?= h(
+    $trip[&quot;title&quot;],
+) ?&gt;&quot;&gt;
+&lt;div class=&quot;section-heading&quot;&gt;&lt;h2&gt;เส้นทางความทรงจำ · &lt;?= count(
+    $places,
+) ?&gt; จุดหมาย&lt;/h2&gt;&lt;?php if (
+     $is_owner
+ ): ?&gt;&lt;a class=&quot;btn&quot; href=&quot;add_place.php?trip_id=&lt;?= $trip_id ?&gt;&quot;&gt;+ เพิ่มสถานที่&lt;/a&gt;&lt;?php endif; ?&gt;&lt;/div&gt;
+&lt;section class=&quot;timeline&quot;&gt;
+&lt;?php foreach ($places as $i =&gt; $place): ?&gt;
+&lt;article class=&quot;panel place-entry&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;จุดหมาย &lt;?= $i +
+    1 ?&gt; · &lt;?= h(
+     $place[&quot;visit_date&quot;],
+ ) ?&gt;&lt;/p&gt;&lt;h2&gt;&lt;a href=&quot;place_view.php?id=&lt;?= (int) $place[&quot;place_id&quot;] ?&gt;&quot;&gt;&lt;?= h(
+    $place[&quot;name&quot;],
+) ?&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p class=&quot;muted&quot;&gt;&lt;?= h(
+    $place[&quot;province&quot;],
+) ?&gt;&lt;/p&gt;&lt;p class=&quot;story&quot;&gt;&lt;?= h($place[&quot;story&quot;]) ?&gt;&lt;/p&gt;
+&lt;div class=&quot;photo-grid&quot;&gt;&lt;?php foreach (
+    photos_for((int) $place[&quot;place_id&quot;])
+    as $photo
+): ?&gt;&lt;a href=&quot;media.php?photo_id=&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;media.php?photo_id=&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot; alt=&quot;&lt;?= h(
+    $place[&quot;name&quot;],
+) ?&gt;&quot; loading=&quot;lazy&quot;&gt;&lt;/a&gt;&lt;?php endforeach; ?&gt;&lt;/div&gt;
+&lt;?php if (
+    $is_owner
+): ?&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary small&quot; href=&quot;edit_place.php?id=&lt;?= (int) $place[
+    &quot;place_id&quot;
+] ?&gt;&quot;&gt;แก้ไขสถานที่ / รูป&lt;/a&gt;&lt;a class=&quot;btn secondary small&quot; href=&quot;delete_place.php?id=&lt;?= (int) $place[
+    &quot;place_id&quot;
+] ?&gt;&quot;&gt;ลบสถานที่&lt;/a&gt;&lt;/div&gt;&lt;?php endif; ?&gt;
+&lt;/article&gt;&lt;?php endforeach; ?&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f15">
+    <summary>add_place.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$trip_id = (int) ($_GET[&quot;trip_id&quot;] ?? 0);
+$trip = get_trip($trip_id, true);
+$place = [];
+$message = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $created = [];
+    $transaction = false;
+    try {
+        [$name, $province, $visit, $story, $sort] = place_input($trip);
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT COUNT(*) AS total FROM trip_places WHERE trip_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+        $stmt-&gt;execute();
+        if ($stmt-&gt;get_result()-&gt;fetch_assoc()[&quot;total&quot;] &gt;= 20) {
+            throw new RuntimeException(&quot;ทริปหนึ่งมีสถานที่ได้ไม่เกิน 20 แห่ง&quot;);
+        }
+        $stmt-&gt;close();
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO trip_places(trip_id,name,province,visit_date,story,sort_order) VALUES(?,?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;issssi&quot;,
+            $trip_id,
+            $name,
+            $province,
+            $visit,
+            $story,
+            $sort,
+        );
+        $stmt-&gt;execute();
+        $place_id = $conn-&gt;insert_id;
+        $stmt-&gt;close();
+        add_photos($place_id, $created);
+        $conn-&gt;commit();
+        $transaction = false;
+        flash(&quot;เพิ่มสถานที่แล้ว&quot;);
+        go(&quot;trip_detail.php?id=&quot; . $trip_id);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        clean_files($created);
+        $message = error_message($error);
+    }
+}
+$page_title = &quot;เพิ่มสถานที่&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;h1&gt;เพิ่มสถานที่ในทริป&lt;/h1&gt;&lt;p&gt;&lt;?= h(
+    $trip[&quot;title&quot;],
+) ?&gt;&lt;/p&gt;&lt;p class=&quot;muted&quot;&gt;วันที่ต้องอยู่ระหว่าง &lt;?= h(
+    $trip[&quot;start_date&quot;],
+) ?&gt; ถึง &lt;?= h($trip[&quot;end_date&quot;]) ?&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt; · กรุณาเลือกไฟล์รูปใหม่อีกครั้ง&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form class=&quot;panel&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;&lt;?php
+csrf_field();
+require &quot;includes/place_fields.php&quot;;
+?&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;trip_detail.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn&quot;&gt;บันทึกสถานที่&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f16">
+    <summary>edit_place.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$place_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+[$place, $trip] = get_place($place_id, true);
+$trip_id = (int) $trip[&quot;trip_id&quot;];
+$message = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $created = [];
+    $removed = [];
+    $transaction = false;
+    try {
+        [$name, $province, $visit, $story, $sort] = place_input($trip);
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        $stmt = $conn-&gt;prepare(
+            &quot;UPDATE trip_places SET name=?,province=?,visit_date=?,story=?,sort_order=? WHERE place_id=? AND trip_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;ssssiii&quot;,
+            $name,
+            $province,
+            $visit,
+            $story,
+            $sort,
+            $place_id,
+            $trip_id,
+        );
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        $delete = $_POST[&quot;delete_photos&quot;] ?? [];
+        if (!is_array($delete)) {
+            throw new RuntimeException(&quot;รายการรูปที่ลบไม่ถูกต้อง&quot;);
+        }
+        foreach ($delete as $photo) {
+            $photo_id = (int) $photo;
+            $stmt = $conn-&gt;prepare(
+                &quot;SELECT filename FROM place_photos WHERE photo_id=? AND place_id=?&quot;,
+            );
+            $stmt-&gt;bind_param(&quot;ii&quot;, $photo_id, $place_id);
+            $stmt-&gt;execute();
+            $row = $stmt-&gt;get_result()-&gt;fetch_assoc();
+            $stmt-&gt;close();
+            if ($row) {
+                $removed[] = $row[&quot;filename&quot;];
+                $stmt = $conn-&gt;prepare(
+                    &quot;DELETE FROM place_photos WHERE photo_id=? AND place_id=?&quot;,
+                );
+                $stmt-&gt;bind_param(&quot;ii&quot;, $photo_id, $place_id);
+                $stmt-&gt;execute();
+                $stmt-&gt;close();
+            }
+        }
+        add_photos($place_id, $created);
+        $conn-&gt;commit();
+        $transaction = false;
+        clean_files($removed);
+        flash(&quot;แก้ไขสถานที่แล้ว&quot;);
+        go(&quot;trip_detail.php?id=&quot; . $trip_id);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        clean_files($created);
+        $message = error_message($error);
+    }
+}
+$photos = photos_for($place_id);
+$page_title = &quot;แก้ไขสถานที่&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;h1&gt;แก้ไขสถานที่&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;&lt;?= h(
+    $trip[&quot;title&quot;],
+) ?&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt; · กรุณาเลือกไฟล์รูปใหม่อีกครั้ง&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form class=&quot;panel&quot; method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;&lt;?php
+csrf_field();
+require &quot;includes/place_fields.php&quot;;
+?&gt;
+&lt;div class=&quot;photo-grid&quot;&gt;&lt;?php foreach (
+    $photos
+    as $photo
+): ?&gt;&lt;label&gt;&lt;img src=&quot;media.php?photo_id=&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot; alt=&quot;รูปสถานที่&quot;&gt;&lt;span class=&quot;check&quot;&gt;&lt;input type=&quot;checkbox&quot; name=&quot;delete_photos[]&quot; value=&quot;&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot;&gt;ลบรูปนี้เมื่อบันทึก&lt;/span&gt;&lt;/label&gt;&lt;?php endforeach; ?&gt;&lt;/div&gt;
+&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;trip_detail.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn&quot;&gt;บันทึกการแก้ไข&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f17">
+    <summary>delete_place.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$place_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+[$place, $trip] = get_place($place_id, true);
+$trip_id = (int) $trip[&quot;trip_id&quot;];
+$message = &quot;&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $transaction = false;
+    try {
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        // ล็อกทริปขณะตรวจจำนวน เพื่อไม่ให้เหลือ 0 สถานที่เมื่อมีการลบพร้อมกัน
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT trip_id FROM trips WHERE trip_id=? FOR UPDATE&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+        $stmt-&gt;execute();
+        $stmt-&gt;get_result()-&gt;fetch_assoc();
+        $stmt-&gt;close();
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT COUNT(*) AS total FROM trip_places WHERE trip_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+        $stmt-&gt;execute();
+        $count = (int) $stmt-&gt;get_result()-&gt;fetch_assoc()[&quot;total&quot;];
+        $stmt-&gt;close();
+        if ($count &lt;= 1) {
+            throw new RuntimeException(
+                &quot;ทริปต้องมีอย่างน้อยหนึ่งสถานที่ กรุณาเพิ่มสถานที่ใหม่ก่อนลบ&quot;,
+            );
+        }
+        $files = array_column(photos_for($place_id), &quot;filename&quot;);
+        $stmt = $conn-&gt;prepare(
+            &quot;DELETE FROM trip_places WHERE place_id=? AND trip_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;ii&quot;, $place_id, $trip_id);
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        $conn-&gt;commit();
+        $transaction = false;
+        clean_files($files);
+        flash(&quot;ลบสถานที่แล้ว&quot;);
+        go(&quot;trip_detail.php?id=&quot; . $trip_id);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        $message = error_message($error);
+    }
+}
+$page_title = &quot;ยืนยันลบสถานที่&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel narrow&quot;&gt;&lt;h1&gt;ลบสถานที่นี้?&lt;/h1&gt;&lt;h2&gt;&lt;?= h(
+    $place[&quot;name&quot;],
+) ?&gt;&lt;/h2&gt;&lt;p&gt;รูปภาพและเรื่องราวของสถานที่นี้จะถูกลบถาวร&lt;/p&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot;&gt;&lt;?php csrf_field(); ?&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;trip_detail.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn danger&quot;&gt;ยืนยันการลบ&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f18">
+    <summary>delete_trip.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$trip_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+$trip = get_trip($trip_id, true);
+$message = &quot;&quot;;
+// GET แสดงหน้ายืนยันเท่านั้น; ลบจริงด้วย POST + CSRF
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $transaction = false;
+    try {
+        $stmt = $conn-&gt;prepare(
+            &quot;SELECT ph.filename FROM place_photos ph JOIN trip_places p ON ph.place_id=p.place_id WHERE p.trip_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;i&quot;, $trip_id);
+        $stmt-&gt;execute();
+        $files = array_column(
+            $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC),
+            &quot;filename&quot;,
+        );
+        $stmt-&gt;close();
+        $files[] = $trip[&quot;cover&quot;];
+        $conn-&gt;begin_transaction();
+        $transaction = true;
+        $uid = user_id();
+        $stmt = $conn-&gt;prepare(
+            &quot;DELETE FROM trips WHERE trip_id=? AND user_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;ii&quot;, $trip_id, $uid);
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        $conn-&gt;commit();
+        $transaction = false;
+        clean_files($files);
+        flash(&quot;ลบทริปและรูปภาพแล้ว&quot;);
+        go(&quot;my_trips.php&quot;);
+    } catch (Throwable $error) {
+        if ($transaction) {
+            $conn-&gt;rollback();
+        }
+        $message = error_message($error);
+    }
+}
+$page_title = &quot;ยืนยันลบทริป&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel narrow&quot;&gt;&lt;h1&gt;ลบทริปนี้?&lt;/h1&gt;&lt;h2&gt;&lt;?= h(
+    $trip[&quot;title&quot;],
+) ?&gt;&lt;/h2&gt;&lt;p&gt;สถานที่ รูปภาพ และรายการที่ผู้อื่นบันทึกไว้จะถูกลบตาม ไม่สามารถย้อนกลับได้&lt;/p&gt;
+&lt;?php if ($message): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h(
+    $message,
+) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot;&gt;&lt;?php csrf_field(); ?&gt;&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;trip_detail.php?id=&lt;?= $trip_id ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn danger&quot;&gt;ยืนยันการลบ&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f19">
+    <summary>media.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+// ไม่มี static URL ไปยังไฟล์ส่วนตัว: ตรวจสิทธิ์ใหม่ทุกครั้ง
+$filename = null;
+if (isset($_GET[&quot;trip_id&quot;])) {
+    $trip_id = (int) $_GET[&quot;trip_id&quot;];
+    $uid = user_id();
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT cover AS filename FROM trips WHERE trip_id=? AND (visibility=&#x27;public&#x27; OR user_id=?)&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;ii&quot;, $trip_id, $uid);
+} elseif (isset($_GET[&quot;photo_id&quot;])) {
+    $photo_id = (int) $_GET[&quot;photo_id&quot;];
+    $uid = user_id();
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT ph.filename FROM place_photos ph JOIN trip_places p ON ph.place_id=p.place_id JOIN trips t ON p.trip_id=t.trip_id WHERE ph.photo_id=? AND (t.visibility=&#x27;public&#x27; OR t.user_id=?)&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;ii&quot;, $photo_id, $uid);
+} elseif (isset($_GET[&quot;user_id&quot;])) {
+    $uid = (int) $_GET[&quot;user_id&quot;];
+    $stmt = $conn-&gt;prepare(
+        &quot;SELECT avatar AS filename FROM users WHERE user_id=?&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;i&quot;, $uid);
+} else {
+    http_response_code(404);
+    exit();
+}
+$stmt-&gt;execute();
+$row = $stmt-&gt;get_result()-&gt;fetch_assoc();
+$stmt-&gt;close();
+$filename = $row[&quot;filename&quot;] ?? null;
+if (
+    !$filename ||
+    !preg_match(&quot;/\A[a-f0-9]{48}\.(jpg|png|webp)\z/&quot;, $filename)
+) {
+    http_response_code(404);
+    exit();
+}
+$path = UPLOAD_DIR . &quot;/&quot; . $filename;
+if (!is_file($path)) {
+    http_response_code(404);
+    exit();
+}
+$types = [&quot;jpg&quot; =&gt; &quot;image/jpeg&quot;, &quot;png&quot; =&gt; &quot;image/png&quot;, &quot;webp&quot; =&gt; &quot;image/webp&quot;];
+header(&quot;Content-Type: &quot; . $types[pathinfo($filename, PATHINFO_EXTENSION)]);
+header(&quot;Content-Length: &quot; . filesize($path));
+readfile($path);
+exit();
+</code>
+</pre>
+</details>
+<details id="f20">
+    <summary>profile.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+$profile_id = (int) ($_GET[&quot;id&quot;] ?? user_id());
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT user_id,username,fullname,bio,avatar FROM users WHERE user_id=?&quot;,
+);
+$stmt-&gt;bind_param(&quot;i&quot;, $profile_id);
+$stmt-&gt;execute();
+$profile = $stmt-&gt;get_result()-&gt;fetch_assoc();
+$stmt-&gt;close();
+if (!$profile) {
+    not_found();
+}
+$viewer = user_id();
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT t.*,u.fullname,c.name AS category_name FROM trips t JOIN users u ON t.user_id=u.user_id JOIN categories c ON t.category_id=c.category_id WHERE t.user_id=? AND (t.visibility=&#x27;public&#x27; OR t.user_id=?) ORDER BY t.start_date DESC,t.trip_id DESC&quot;,
+);
+$stmt-&gt;bind_param(&quot;ii&quot;, $profile_id, $viewer);
+$stmt-&gt;execute();
+$trips = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+$stmt-&gt;close();
+$page_title = $profile[&quot;fullname&quot;];
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel profile-panel&quot;&gt;
+&lt;?php if (
+    $profile[&quot;avatar&quot;]
+): ?&gt;&lt;img class=&quot;avatar&quot; src=&quot;media.php?user_id=&lt;?= $profile_id ?&gt;&quot; alt=&quot;รูปโปรไฟล์ &lt;?= h(
+    $profile[&quot;fullname&quot;],
+) ?&gt;&quot;&gt;&lt;?php else: ?&gt;&lt;span class=&quot;avatar initials&quot; aria-hidden=&quot;true&quot;&gt;&lt;?= h(
+    mb_substr($profile[&quot;fullname&quot;], 0, 1),
+) ?&gt;&lt;/span&gt;&lt;?php endif; ?&gt;
+&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;TRAVELER PROFILE&lt;/p&gt;&lt;h1&gt;&lt;?= h(
+    $profile[&quot;fullname&quot;],
+) ?&gt;&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;@&lt;?= h(
+    $profile[&quot;username&quot;],
+) ?&gt;&lt;/p&gt;&lt;p class=&quot;story&quot;&gt;&lt;?= h($profile[&quot;bio&quot;]) ?&gt;&lt;/p&gt;&lt;strong&gt;&lt;?= count(
+    $trips,
+) ?&gt; ทริป&lt;?= $profile_id === $viewer ? &quot;ทั้งหมด&quot; : &quot;สาธารณะ&quot; ?&gt;&lt;/strong&gt;&lt;/div&gt;
+&lt;?php if (
+    $profile_id === $viewer
+): ?&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;edit_profile.php&quot;&gt;แก้ไขโปรไฟล์&lt;/a&gt;&lt;?php endif; ?&gt;&lt;/section&gt;
+&lt;div class=&quot;section-heading&quot;&gt;&lt;h2&gt;เรื่องราวการเดินทาง&lt;/h2&gt;&lt;/div&gt;
+&lt;?php
+require &quot;includes/cards.php&quot;;
+require &quot;includes/footer.php&quot;;
+
+?&gt;
+</code>
+</pre>
+</details>
+<details id="f21">
+    <summary>edit_profile.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$uid = user_id();
+$message = &quot;&quot;;
+$stmt = $conn-&gt;prepare(&quot;SELECT fullname,bio,avatar FROM users WHERE user_id=?&quot;);
+$stmt-&gt;bind_param(&quot;i&quot;, $uid);
+$stmt-&gt;execute();
+$profile = $stmt-&gt;get_result()-&gt;fetch_assoc();
+$stmt-&gt;close();
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] === &quot;POST&quot;) {
+    check_csrf();
+    $created = [];
+    try {
+        $fullname = text_value(&quot;fullname&quot;, 100, true);
+        $bio = text_value(&quot;bio&quot;, 500);
+        $new_avatar = upload_photo($_FILES[&quot;avatar&quot;] ?? [], $created);
+        $avatar =
+            $new_avatar ??
+            (!empty($_POST[&quot;remove_avatar&quot;]) ? null : $profile[&quot;avatar&quot;]);
+        $stmt = $conn-&gt;prepare(
+            &quot;UPDATE users SET fullname=?,bio=?,avatar=? WHERE user_id=?&quot;,
+        );
+        $stmt-&gt;bind_param(&quot;sssi&quot;, $fullname, $bio, $avatar, $uid);
+        $stmt-&gt;execute();
+        $stmt-&gt;close();
+        if ($avatar !== $profile[&quot;avatar&quot;]) {
+            clean_files([$profile[&quot;avatar&quot;]]);
+        }
+        $_SESSION[&quot;fullname&quot;] = $fullname;
+        flash(&quot;แก้ไขโปรไฟล์แล้ว&quot;);
+        go(&quot;profile.php?id=&quot; . $uid);
+    } catch (Throwable $error) {
+        clean_files($created);
+        $message = error_message($error);
+    }
+}
+$page_title = &quot;แก้ไขโปรไฟล์&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;panel narrow&quot;&gt;&lt;h1&gt;แก้ไขโปรไฟล์&lt;/h1&gt;&lt;?php if (
+    $message
+): ?&gt;&lt;p class=&quot;error&quot; role=&quot;alert&quot;&gt;&lt;?= h($message) ?&gt;&lt;/p&gt;&lt;?php endif; ?&gt;
+&lt;form method=&quot;post&quot; enctype=&quot;multipart/form-data&quot;&gt;&lt;?php csrf_field(); ?&gt;
+&lt;label for=&quot;fullname&quot;&gt;ชื่อที่แสดง&lt;/label&gt;&lt;input id=&quot;fullname&quot; name=&quot;fullname&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;fullname&quot;] ?? $profile[&quot;fullname&quot;],
+) ?&gt;&quot; maxlength=&quot;100&quot; required&gt;
+&lt;label for=&quot;bio&quot;&gt;คำแนะนำตัว&lt;/label&gt;&lt;textarea id=&quot;bio&quot; name=&quot;bio&quot; maxlength=&quot;500&quot; rows=&quot;4&quot;&gt;&lt;?= h(
+    $_POST[&quot;bio&quot;] ?? $profile[&quot;bio&quot;],
+) ?&gt;&lt;/textarea&gt;
+&lt;label for=&quot;avatar&quot;&gt;รูปโปรไฟล์ (JPG PNG WebP ไม่เกิน 5 MB)&lt;/label&gt;&lt;input id=&quot;avatar&quot; name=&quot;avatar&quot; type=&quot;file&quot; accept=&quot;image/jpeg,image/png,image/webp&quot;&gt;
+&lt;?php if (
+    $profile[&quot;avatar&quot;]
+): ?&gt;&lt;img class=&quot;avatar&quot; src=&quot;media.php?user_id=&lt;?= $uid ?&gt;&quot; alt=&quot;โปรไฟล์ปัจจุบัน&quot;&gt;&lt;label class=&quot;check&quot;&gt;&lt;input name=&quot;remove_avatar&quot; value=&quot;1&quot; type=&quot;checkbox&quot;&gt;ลบรูปโปรไฟล์เดิม&lt;/label&gt;&lt;?php endif; ?&gt;
+&lt;div class=&quot;actions&quot;&gt;&lt;a class=&quot;btn secondary&quot; href=&quot;profile.php?id=&lt;?= $uid ?&gt;&quot;&gt;ยกเลิก&lt;/a&gt;&lt;button class=&quot;btn&quot;&gt;บันทึกโปรไฟล์&lt;/button&gt;&lt;/div&gt;&lt;/form&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f22">
+    <summary>bookmark.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+if ($_SERVER[&quot;REQUEST_METHOD&quot;] !== &quot;POST&quot;) {
+    http_response_code(405);
+    header(&quot;Allow: POST&quot;);
+    exit(&quot;กรุณากดปุ่มบันทึกทริป&quot;);
+}
+check_csrf();
+$trip_id = (int) ($_POST[&quot;trip_id&quot;] ?? 0);
+$action = $_POST[&quot;action&quot;] ?? &quot;add&quot;;
+if (!user_id()) {
+    $_SESSION[&quot;pending_bookmark&quot;] = $trip_id;
+    $_SESSION[&quot;next&quot;] = &quot;bookmarks.php&quot;;
+    go(&quot;login.php&quot;);
+}
+if ($action === &quot;remove&quot;) {
+    $uid = user_id();
+    $stmt = $conn-&gt;prepare(
+        &quot;DELETE FROM bookmarks WHERE user_id=? AND trip_id=?&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;ii&quot;, $uid, $trip_id);
+    $stmt-&gt;execute();
+    $stmt-&gt;close();
+    flash(&quot;นำออกจากทริปที่สนใจแล้ว&quot;);
+} else {
+    flash(
+        bookmark_trip($trip_id)
+            ? &quot;บันทึกทริปแล้ว&quot;
+            : &quot;บันทึกไม่ได้ ทริปต้องเป็นสาธารณะของผู้อื่น&quot;,
+    );
+}
+go(&quot;bookmarks.php&quot;);
+</code>
+</pre>
+</details>
+<details id="f23">
+    <summary>bookmarks.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+require_login();
+$uid = user_id();
+$stmt = $conn-&gt;prepare(
+    &quot;SELECT t.*,u.fullname,c.name AS category_name FROM bookmarks b JOIN trips t ON b.trip_id=t.trip_id JOIN users u ON t.user_id=u.user_id JOIN categories c ON t.category_id=c.category_id WHERE b.user_id=? AND t.visibility=&#x27;public&#x27; ORDER BY b.created_at DESC,t.trip_id DESC&quot;,
+);
+$stmt-&gt;bind_param(&quot;i&quot;, $uid);
+$stmt-&gt;execute();
+$trips = $stmt-&gt;get_result()-&gt;fetch_all(MYSQLI_ASSOC);
+$stmt-&gt;close();
+$page_title = &quot;ทริปที่สนใจ&quot;;
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;section class=&quot;page-heading&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;SAVED INSPIRATIONS&lt;/p&gt;&lt;h1&gt;ทริปที่เก็บไว้เป็นแรงบันดาลใจ&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;ทริปที่ถูกลบหรือเปลี่ยนเป็นส่วนตัวจะไม่แสดงในหน้านี้&lt;/p&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/cards.php&quot;; ?&gt;
+&lt;?php if (
+    $trips
+): ?&gt;&lt;section class=&quot;panel saved-list&quot;&gt;&lt;h2&gt;จัดการรายการที่บันทึก&lt;/h2&gt;&lt;?php foreach (
+    $trips
+    as $t
+): ?&gt;&lt;form method=&quot;post&quot; action=&quot;bookmark.php&quot; class=&quot;saved-row&quot;&gt;&lt;?php csrf_field(); ?&gt;&lt;input type=&quot;hidden&quot; name=&quot;trip_id&quot; value=&quot;&lt;?= (int) $t[
+    &quot;trip_id&quot;
+] ?&gt;&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;action&quot; value=&quot;remove&quot;&gt;&lt;a href=&quot;trip_detail.php?id=&lt;?= (int) $t[
+    &quot;trip_id&quot;
+] ?&gt;&quot;&gt;&lt;?= h(
+    $t[&quot;title&quot;],
+) ?&gt;&lt;/a&gt;&lt;button class=&quot;btn secondary small&quot;&gt;ยกเลิกการบันทึก&lt;/button&gt;&lt;/form&gt;&lt;?php endforeach; ?&gt;&lt;/section&gt;&lt;?php endif; ?&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f24">
+    <summary>README.md</summary>
+    <pre>
+        <code># PaiBaekPea — PHP/MySQLi ฉบับดัดแปลงจากเว็บ E-Learning
+
+โครงการนี้ใช้รูปแบบเดียวกับไฟล์ตัวอย่าง: PHP ส่วนประมวลผลอยู่ด้านบน ตามด้วย HTML, ใช้ MySQLi `$conn-&gt;prepare()` / `bind_param()` / `get_result()`, Session และ CSS ปกติ ไม่ใช้ React, Node.js, PDO หรือ framework ในตัวเว็บไซต์
+
+สร้างเป็นโครงการใหม่ในฐานข้อมูล `paibaekpea_db` ไม่เขียนทับหรือแปลงข้อมูลจริงใน `e_learning_db` ไฟล์ที่ส่งมาเป็นตัวอย่างไม่ได้ถูกแก้ไข
+
+## ติดตั้งบน XAMPP
+
+ต้องใช้ PHP 8.1 ขึ้นไปที่มี mysqli/mysqlnd, fileinfo และ mbstring พร้อม MySQL หรือ MariaDB ที่รองรับ InnoDB เครื่องมือ phpMyAdmin ใช้จัดการฐานข้อมูล
+
+1. แตก ZIP แล้วนำโฟลเดอร์โครงการไปไว้ที่ `C:\xampp\htdocs\paibaekpea` (macOS ให้ใช้โฟลเดอร์ htdocs ของ XAMPP ที่ติดตั้ง)
+2. เปิด Apache และ MySQL ใน XAMPP
+3. เปิด `http://localhost/phpmyadmin` → Import → เลือก `database/schema.sql` → Go
+4. แก้ `db.php` ให้ตรงกับเครื่อง: ค่าเริ่มต้น host=localhost, user=root, password ว่าง, database=paibaekpea_db
+5. เปิด `http://localhost/paibaekpea/index.php`
+6. สมัครสมาชิกแล้วสร้างทริปแรก หรือเพิ่มข้อมูลสาธิตตามหัวข้อถัดไป
+
+ห้ามเปิด `.php` โดยดับเบิลคลิกหรือใช้ VS Code Live Server ต้องเปิดผ่าน Apache และ URL localhost
+
+โฟลเดอร์ `includes` ถูก Apache ปิดการเข้าถึงจาก URL แต่ PHP ยัง require ไฟล์ได้ตามปกติ
+
+## บัญชีและทริปตัวอย่าง (ไม่บังคับ)
+
+นำเข้า schema ก่อน แล้วเปิด Terminal ในโฟลเดอร์ paibaekpea:
+
+```powershell
+# Windows PowerShell / XAMPP
+&amp; &quot;C:\xampp\php\php.exe&quot; database/seed.php
+```
+
+ถ้า PHP อยู่ใน PATH ใช้ `php database/seed.php` บน macOS ที่ติดตั้ง XAMPP ตามค่าปกติอาจใช้ `/Applications/XAMPP/xamppfiles/bin/php database/seed.php` ให้ปรับพาธตามเครื่องจริง
+
+seed รันจาก command line เท่านั้น ไม่เปิดผ่านเว็บ และจะไม่ทำงานเมื่อมีสมาชิกอยู่แล้ว เพื่อไม่เขียนทับข้อมูลเดิม
+
+| บัญชี | อีเมล | รหัสผ่านสาธิต |
+|---|---|---|
+| ter_travels | ter@example.com | DemoTrip123! |
+| mali_journey | mali@example.com | DemoTrip123! |
+
+ตัวอย่างมี 3 ทริปสาธารณะและ 2 ทริปส่วนตัว รวมทริปคร่อมเดือนสิงหาคม–กันยายน และมกราคม–กุมภาพันธ์ ข้อความ/บัญชีเป็นข้อมูลสมมติ ภาพมีเครดิตใน assets/CREDITS.md
+
+## เทียบไฟล์เก่ากับไฟล์ใหม่
+
+| ไฟล์ตัวอย่าง | ไฟล์ท่องเที่ยว |
+|---|---|
+| index(1).php | index.php — สำรวจทริปสาธารณะ |
+| add_course.php | add_trip.php — สร้างทริปพร้อมสถานที่แรก |
+| edit_course.php | edit_trip.php — แก้ข้อมูลทริป/ปก/ความเป็นส่วนตัว |
+| delete_course.php | delete_trip.php — หน้ายืนยันและลบทริปด้วย POST |
+| course_detail.php | trip_detail.php — เรื่องราวและสถานที่เรียงลำดับ |
+| add_lesson.php | add_place.php — เพิ่มสถานที่ในทริป |
+| edit_lesson.php | edit_place.php — แก้สถานที่/ลำดับ/เพิ่มและลบรูป |
+| delete_lesson.php | delete_place.php — ยืนยันลบสถานที่และรูป |
+| lesson_view.php | place_view.php — รายละเอียดสถานที่ |
+| login.php | login.php — เข้าสู่ระบบและกลับทำรายการที่เลือก |
+| register.php | register.php — สมัครเป็นสมาชิก ไม่เลือก student/instructor |
+| logout.php | logout.php — จบ Session ผ่าน POST |
+| db.php | db.php — เชื่อม paibaekpea_db ด้วย MySQLi |
+
+หน้าเพิ่มเติมตามโจทย์: `my_trips.php`, `profile.php`, `edit_profile.php`, `bookmarks.php`, `bookmark.php` และ `media.php`
+
+ใช้ชื่อแบบ underscore ให้ใกล้กับต้นฉบับ (เช่น add_trip.php) อย่านำไปปนกับโค้ด PDO ชุดก่อนหน้าที่ใช้ trip-create.php เพราะชื่อคอลัมน์/การเชื่อมต่อแตกต่างกัน
+
+## อ่านและเขียนตาม
+
+เปิด `CODE-GUIDE.html` ในเบราว์เซอร์ได้โดยไม่ต้องเปิด PHP จะเห็น source ทุกไฟล์เป็นข้อความ มีสารบัญและตารางเทียบไฟล์เก่า–ใหม่ จากนั้นคัดลอกทีละไฟล์ลง VS Code ได้
+
+ลำดับแนะนำ: `database/schema.sql` → `db.php` → `includes/init.php`, `helpers.php`, `header.php`, `footer.php` → `style.css` → `register.php`, `login.php`, `logout.php` → `index.php` → CRUD ทริป → CRUD สถานที่ → โปรไฟล์/Bookmark/Media
+
+## การใช้งาน
+
+- ผู้ชมทั่วไป: สำรวจ ค้นหาชื่อทริป/สถานที่/จังหวัด กรองประเภท อ่านทริป และเปิดโปรไฟล์เจ้าของได้เฉพาะข้อมูลสาธารณะ
+- สมาชิก: สร้างทริปและสถานที่แรก → เพิ่มสถานที่อื่นผ่านปุ่มในหน้าทริป เหมือนเพิ่มบทเรียนในคอร์สเดิม
+- กำหนดลำดับสถานที่ด้วยตัวเลข sort_order หากเลขเท่ากันเรียง place_id ต่อ
+- หน้าแก้ไขทริปแก้ช่วงวันได้เมื่อยังครอบคลุมวันที่ของสถานที่เดิม หากต้องย้ายทริปไปช่วงใหม่ ให้ขยายช่วงทริปก่อน แก้วันที่สถานที่ แล้วค่อยลดช่วงทริป
+- ไม่ให้ลบสถานที่สุดท้ายเพื่อรักษาข้อกำหนดว่าหนึ่งทริปต้องมีอย่างน้อยหนึ่งสถานที่
+- my_trips.php ใช้ปี ค.ศ. และเดือนเดินทาง; ทริปที่คร่อมเดือนจะตรงกับทุกเดือนที่ทับซ้อน
+- รูปปกและรูปสถานที่ส่งผ่าน media.php ที่ตรวจสิทธิ์ใหม่ทุกคำขอ ไม่มี public URL ไปยัง uploads
+- โปรไฟล์ผู้อื่นไม่นับทริปส่วนตัว; เจ้าของเห็นของตนทั้งหมด
+- Bookmark เป็นการอ้างอิงต้นฉบับ เมื่อ private จะซ่อน เมื่อกลับ public จะแสดงอีกครั้ง; ลบทริปแล้ว FK cascade ลบ Bookmark
+- สมาชิกทุกคนมีสิทธิ์เท่ากัน แต่แก้ไข/ลบได้เฉพาะข้อมูลตนเอง ไม่มี admin dashboard
+
+## รูปภาพและการตั้งค่า PHP
+
+ปกติเมื่อวางโปรเจกต์ใน `xampp/htdocs/paibaekpea` ระบบเก็บรูปที่ `xampp/paibaekpea-private-uploads` (นอก htdocs) หากใช้โครงสร้างโฟลเดอร์อื่น ให้ตั้ง UPLOAD_DIR ใน environment หรือแก้ `$privatePath` ใน includes/init.php เป็นพาธนอก document root
+
+รับ JPG/PNG/WebP ตรวจ MIME ด้วย fileinfo และขนาดภาพด้วย getimagesize จำกัด 5 MiB / 25 ล้านพิกเซลต่อไฟล์; ไม่เกิน 10 รูปต่อสถานที่ และ 20 สถานที่ต่อทริป ไม่มีการ re-encode หรือลบ EXIF ในรุ่นนี้
+
+ใน php.ini แนะนำสำหรับการสาธิต:
+
+```ini
+upload_max_filesize = 5M
+post_max_size = 64M
+max_file_uploads = 20
+```
+
+เปลี่ยนแล้ว restart Apache หากเกิน post_max_size PHP อาจไม่ส่ง $_POST/$_FILES และระบบจะแจ้งคำขอหมดอายุ ให้ลดจำนวนไฟล์ที่อัปโหลดในครั้งเดียว
+
+สำรองทั้งฐานข้อมูล MySQL และโฟลเดอร์รูปภาพภายนอกโปรเจกต์ อย่า backup เฉพาะ htdocs
+
+## โครงสร้างและความปลอดภัย
+
+- ใช้ prepared statements กับข้อมูลผู้ใช้; escape HTML ก่อนแสดง
+- password_hash/password_verify; session_regenerate_id หลังล็อกอิน
+- CSRF token ทุก mutation รวมลบ/ออกจากระบบ
+- ตรวจเจ้าของที่ server สำหรับแก้ไขและลบทั้งทริปและสถานที่
+- รูปภาพไม่ใช้ชื่อเดิมจากผู้ใช้งาน ใช้ random_bytes ตั้งชื่อใหม่
+- transaction สำหรับทริป/สถานที่; rollback พร้อมลบไฟล์ใหม่เมื่อคำขอล้มเหลว; ลบไฟล์เก่าหลัง commit
+- CSP ไม่อนุญาต JavaScript จึงใช้หน้ายืนยันและ form POST แบบ PHP ล้วน
+- จำกัด login ผิด 10 ครั้ง/15 นาทีต่อ Session เท่านั้น ยังไม่ใช่ rate limiter ต่อ IP หรือระบบป้องกัน brute force สำหรับ production
+
+## ข้อจำกัดและผลตรวจ
+
+ดู `TEST-REPORT.md` สำหรับรายละเอียด ตรวจไวยากรณ์ด้วย PHP parser และลิงก์ภายในแล้ว แต่สภาพแวดล้อมที่สร้างไฟล์ไม่มี PHP/MySQL จึง **ยังไม่ได้รันเว็บไซต์ PHP, import SQL หรือทดสอบ CRUD จริง** ต้องทดสอบตามรายการบน XAMPP ก่อนส่งโครงงานหรือเผยแพร่
+
+ยังไม่มี pagination, account recovery, email verification, schema migrations, concurrency/load testing, automatic orphan file cleanup หรือทดสอบการเข้าถึงเต็ม WCAG ขณะมีหลายแท็บแก้ไขพร้อมกันผลล่าสุดจะชนะ รูปที่ดาวน์โหลดไว้ตอนเป็นสาธารณะไม่สามารถถอนสำเนาย้อนหลังได้
+
+UI ใช้ server-rendered forms ไม่มี AJAX จึงใช้ loading indicator ของเบราว์เซอร์ ไม่ได้เพิ่ม spinner ในแอปเอง
+</code>
+</pre>
+</details>
+<details id="f25">
+    <summary>STATIC-CHECK.json</summary>
+    <pre>
+        <code>{
+  &quot;tool&quot;: &quot;Node php-parser (not PHP runtime)&quot;,
+  &quot;phpFiles&quot;: 27,
+  &quot;syntaxErrors&quot;: []
+}</code>
+</pre>
+</details>
+<details id="f26">
+    <summary>TEST-REPORT.md</summary>
+    <pre>
+        <code># รายงานตรวจโค้ด PHP/MySQLi
+
+## สิ่งที่ตรวจจริง
+
+- อ่านไฟล์ตัวอย่าง E-Learning และตรวจรูปแบบ PHP/MySQLi, ความสัมพันธ์ courses → lessons, Session และ role
+- สร้างโครงการใหม่ให้คงรูปแบบ prepared statement/bind_param/get_result และแยกหน้า CRUD เหมือนต้นฉบับ
+- ตรวจไวยากรณ์ PHP ทั้ง 27 ไฟล์ด้วย Node package `php-parser`: ไม่พบ syntax error (เป็น static parser ไม่ใช่คำสั่ง php -l)
+- ตรวจ href/action ที่เป็นชื่อไฟล์ภายใน: ไม่พบเป้าหมายที่ขาด
+- ตรวจจำนวนตัวอักษร type ของ bind_param เทียบจำนวนอาร์กิวเมนต์: ตรงกัน
+- ตรวจ source ว่า routes อ่านรูปและข้อมูลส่วนตัวใช้ visibility/owner และ routes แก้/ลบตรวจเจ้าของ
+- ตรวจ ZIP ไม่รวม node_modules, ฐานข้อมูลใช้งานจริง หรือ uploads ของผู้ใช้
+
+ผลเครื่องอ่านได้: STATIC-CHECK.json
+
+## ยังไม่ได้ทดสอบจริง
+
+เครื่องมือรอบนี้ไม่มี PHP CLI/Apache/MySQL/MariaDB จึงยังไม่ได้ทดสอบ php -l, import schema.sql, seed.php, SQL execution, login/CRUD/upload/Bookmark/transaction บน server หรือภาพหน้าจอ UI ที่ PHP render จริง ไม่ควรตีความ static checks ว่า integration tests ผ่าน
+
+## รายการทดสอบบน XAMPP
+
+| กรณี | ผลที่คาดหวัง | สถานะ |
+|---|---|---|
+| นำเข้า schema แล้วเปิด index.php | เห็นเว็บและสถานะไม่มีทริป | รอทดสอบ |
+| รัน seed.php ในฐานข้อมูลว่าง | 2 สมาชิก 5 ทริป | รอทดสอบ |
+| สมัครข้อมูลครบ | สร้างบัญชีและเก็บ hash | รอทดสอบ |
+| username/email ซ้ำ | แจ้งซ้ำ ไม่เพิ่มแถว | รอทดสอบ |
+| รหัสผ่านยืนยันไม่ตรง | แจ้งข้อผิดพลาด | รอทดสอบ |
+| login ผิด/ถูก | แจ้งข้อผิดพลาด / สร้าง session | รอทดสอบ |
+| สร้างทริปพร้อมปกและสถานที่แรก | บันทึกข้อมูลพร้อมกัน | รอทดสอบ |
+| วันสิ้นสุดก่อนเริ่ม/วันเยือนอยู่นอกทริป | ปฏิเสธข้อมูล | รอทดสอบ |
+| เพิ่มสถานที่และรูปหลายรูป | แสดงตาม sort_order | รอทดสอบ |
+| แก้สถานที่ ลบรูป เพิ่มรูปใหม่ | เก็บรูปที่เหลือและลบไฟล์ที่ไม่อ้างอิง | รอทดสอบ |
+| ลบทริป/สถานที่ | GET แสดงยืนยัน; POST จึงลบ | รอทดสอบ |
+| ลบสถานที่สุดท้าย | ปฏิเสธจนกว่าจะเพิ่มสถานที่ใหม่ | รอทดสอบ |
+| บัญชี B เปิด edit/delete ของ A | 404 ไม่แก้ไขข้อมูล | รอทดสอบ |
+| ทริปส่วนตัวเปิดจากบัญชีอื่น/guest | 404 | รอทดสอบ |
+| ลิงก์รูปปก/รูปสถานที่ส่วนตัว | 404 เมื่อไม่มีสิทธิ์ | รอทดสอบ |
+| ค้นหาชื่อ/สถานที่/จังหวัด และประเภท | แสดงเฉพาะ public ที่ตรงเงื่อนไข | รอทดสอบ |
+| ทริป 30 ส.ค.–2 ก.ย. | พบในตัวกรองทั้งสิงหาคมและกันยายน | รอทดสอบ |
+| Bookmark ซ้ำ | มีแถวเดียวต่อคู่ user/trip | รอทดสอบ |
+| ทริปที่บันทึกเปลี่ยนเป็น private | ไม่แสดงใน Bookmark และรูปเก่าเปิดไม่ได้ | รอทดสอบ |
+| Guest บันทึกแล้ว login | ตรวจสิทธิ์ซ้ำและทำรายการต่อ | รอทดสอบ |
+| โปรไฟล์บัญชีอื่น | count ไม่รวม private | รอทดสอบ |
+| อัปโหลดไฟล์ปลอม/เกิน 5 MB | ไม่รับไฟล์ | รอทดสอบ |
+| CSRF token ไม่ตรง/ขาด | 403 | รอทดสอบ |
+| ปิดเปิด Apache/MySQL ใหม่ | ข้อมูลยังอยู่ใน MySQL และโฟลเดอร์รูป | รอทดสอบ |
+| หน้าจอ 390 / 768 / 1440px | เมนูและฟอร์มไม่ล้น | รอทดสอบ |
+
+## สิ่งที่แก้จากตัวอย่าง
+
+ไฟล์ต้นฉบับบางหน้าแก้/ลบตรวจ role=instructor แต่ไม่ผูก instructor_id กับคอร์สที่เลือก รุ่นใหม่นี้ตรวจ trips.user_id เทียบ Session รวมทั้งตรวจผ่าน trip_id ของสถานที่ รูปไม่เสิร์ฟผ่านโฟลเดอร์ public และปุ่มลบใช้ POST+CSRF แทนการลบด้วย GET
+</code>
+</pre>
+</details>
+<details id="f27">
+    <summary>assets/CREDITS.md</summary>
+    <pre>
+        <code># ภาพตัวอย่าง
+ภาพถ่ายจาก Unsplash ใช้ประกอบข้อมูลทริปที่สมมติขึ้น ไม่ใช่หลักฐานการเดินทางของบัญชีตัวอย่าง
+
+- `chiangmai.jpg`: Ash Edmonds — https://unsplash.com/photos/landscape-photo-of-mountains-mXBZo6PvjMk
+- `krabi.jpg`: Renee Kennedy — https://unsplash.com/photos/a-person-standing-on-a-beach-PPjhQ4XH3Fg
+- `bangkok.jpg`: Alejandro Cartagena — https://unsplash.com/photos/temple-qeibBI7w4fQ
+- สิทธิ์การใช้งาน: https://unsplash.com/license (หน้าภาพระบุ Free to use under the Unsplash License)
+
+ระบบคัดลอกภาพไปยังพื้นที่ส่วนตัวของเซิร์ฟเวอร์เมื่อ seed และส่งภาพผ่าน API ที่ตรวจสิทธิ์ ไม่มี hotlink รูปทริปส่วนตัว
+</code>
+</pre>
+</details>
+<details id="f28">
+    <summary>database/ER.mmd</summary>
+    <pre>
+        <code>erDiagram
+    users ||--o{ trips : owns
+    categories ||--o{ trips : categorizes
+    trips ||--|{ trip_places : contains
+    trip_places ||--o{ place_photos : has
+    users ||--o{ bookmarks : saves
+    trips ||--o{ bookmarks : referenced_by
+</code>
+</pre>
+</details>
+<details id="f29">
+    <summary>database/README.md</summary>
+    <pre>
+        <code># ฐานข้อมูล
+
+users (user_id PK, username/email UNIQUE) → trips (trip_id PK, user_id/category_id FK) → trip_places (place_id PK, trip_id FK) → place_photos (photo_id PK, place_id FK, filename UNIQUE)
+
+categories 1:N trips; users M:N trips ผ่าน bookmarks ซึ่งใช้ composite primary key (user_id,trip_id) ป้องกันซ้ำ มี ON DELETE CASCADE สำหรับทริป สถานที่ รูป และ Bookmark
+
+cover อยู่ใน trips และ avatar อยู่ใน users เป็นชื่อไฟล์สุ่มของระบบ เก็บไฟล์จริงนอก web root ทุกภาพเข้าผ่าน media.php
+
+validation วันและอย่างน้อยหนึ่งสถานที่ตรวจใน PHP ช่วงวันที่ ISO ใช้ start_date &lt;= filter_end AND end_date &gt;= filter_start จึงรวมทริปคร่อมเดือน ไม่มีการอ้าง created_at เพื่อกรองการเดินทาง
+
+schema.sql เป็น schema ใหม่ ไม่ใช่ migration ฐานข้อมูล e_learning_db; ไม่ย้ายบัญชีหรือรหัสผ่านจากเว็บเดิมอัตโนมัติ
+</code>
+</pre>
+</details>
+<details id="f30">
+    <summary>database/seed.php</summary>
+    <pre>
+        <code>&lt;?php
+// รันจาก Terminal เท่านั้น: php database/seed.php
+if (PHP_SAPI !== &quot;cli&quot;) {
+    http_response_code(404);
+    exit();
+}
+require dirname(__DIR__) . &quot;/includes/init.php&quot;;
+if ($conn-&gt;query(&quot;SELECT user_id FROM users LIMIT 1&quot;)-&gt;num_rows) {
+    exit(&quot;มีสมาชิกแล้ว ไม่เพิ่มข้อมูลซ้ำหรือเขียนทับข้อมูลเดิม\n&quot;);
+}
+$created = [];
+try {
+    $conn-&gt;begin_transaction();
+    $password = password_hash(&quot;DemoTrip123!&quot;, PASSWORD_DEFAULT);
+    foreach (
+        [
+            [
+                &quot;ter_travels&quot;,
+                &quot;ter@example.com&quot;,
+                &quot;เตอร์ ระหว่างทาง&quot;,
+                &quot;เด็กไอทีที่ชอบพักจากหน้าจอแล้วออกไปเที่ยว&quot;,
+            ],
+            [
+                &quot;mali_journey&quot;,
+                &quot;mali@example.com&quot;,
+                &quot;มะลิ ไปเรื่อย&quot;,
+                &quot;เก็บเรื่องราวเล็ก ๆ ระหว่างทาง&quot;,
+            ],
+        ]
+        as $u
+    ) {
+        [$username, $email, $fullname, $bio] = $u;
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO users(username,email,password,fullname,bio) VALUES(?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;sssss&quot;,
+            $username,
+            $email,
+            $password,
+            $fullname,
+            $bio,
+        );
+        $stmt-&gt;execute();
+        $ids[] = $conn-&gt;insert_id;
+        $stmt-&gt;close();
+    }
+    $examples = [
+        [
+            $ids[0],
+            1,
+            &quot;เชียงใหม่ ในวันที่อยากเดินช้าลง&quot;,
+            &quot;ฝากความเหนื่อยไว้กับภูเขา&quot;,
+            &quot;2026-08-30&quot;,
+            &quot;2026-09-02&quot;,
+            &quot;public&quot;,
+            &quot;chiangmai.jpg&quot;,
+            [
+                [
+                    &quot;ดอยสุเทพ&quot;,
+                    &quot;เชียงใหม่&quot;,
+                    &quot;2026-08-30&quot;,
+                    &quot;มองแสงสุดท้ายบนภูเขาแล้วรู้สึกเหมือนได้พักจากทุกอย่าง&quot;,
+                ],
+                [
+                    &quot;เดินเล่นในเมืองเก่า&quot;,
+                    &quot;เชียงใหม่&quot;,
+                    &quot;2026-09-01&quot;,
+                    &quot;เดินตามตรอกเล็ก ๆ แล้วแวะจดบันทึกในร้านกาแฟ&quot;,
+                ],
+            ],
+        ],
+        [
+            $ids[1],
+            2,
+            &quot;กระบี่ มีทะเลเป็นเพื่อน&quot;,
+            &quot;ฟังเสียงคลื่นมากกว่าเสียงแจ้งเตือน&quot;,
+            &quot;2026-07-18&quot;,
+            &quot;2026-07-20&quot;,
+            &quot;public&quot;,
+            &quot;krabi.jpg&quot;,
+            [
+                [
+                    &quot;ชายหาดกระบี่&quot;,
+                    &quot;กระบี่&quot;,
+                    &quot;2026-07-18&quot;,
+                    &quot;เดินบนหาดทราย มองเรือหางยาว แล้วปล่อยเวลาให้ผ่านไปช้า ๆ&quot;,
+                ],
+            ],
+        ],
+        [
+            $ids[0],
+            3,
+            &quot;หนึ่งวันในเมืองเก่า&quot;,
+            &quot;ออกไปมองกรุงเทพฯ ในมุมใหม่&quot;,
+            &quot;2026-06-14&quot;,
+            &quot;2026-06-14&quot;,
+            &quot;public&quot;,
+            &quot;bangkok.jpg&quot;,
+            [
+                [
+                    &quot;ย่านเมืองเก่า&quot;,
+                    &quot;กรุงเทพมหานคร&quot;,
+                    &quot;2026-06-14&quot;,
+                    &quot;บางครั้งเราไม่ต้องเดินทางไกลเพื่อพบสิ่งใหม่&quot;,
+                ],
+            ],
+        ],
+        [
+            $ids[0],
+            1,
+            &quot;ความทรงจำส่วนตัวบนดอย&quot;,
+            &quot;ใช้ทดสอบสิทธิ์ของเตอร์&quot;,
+            &quot;2026-01-31&quot;,
+            &quot;2026-02-02&quot;,
+            &quot;private&quot;,
+            &quot;chiangmai.jpg&quot;,
+            [
+                [
+                    &quot;มุมสงบบนดอย&quot;,
+                    &quot;เชียงใหม่&quot;,
+                    &quot;2026-02-01&quot;,
+                    &quot;เรื่องราวนี้เฉพาะเจ้าของเท่านั้นที่อ่านได้&quot;,
+                ],
+            ],
+        ],
+        [
+            $ids[1],
+            2,
+            &quot;วันพักใจริมทะเล&quot;,
+            &quot;ใช้ทดสอบสิทธิ์ของมะลิ&quot;,
+            &quot;2026-05-02&quot;,
+            &quot;2026-05-03&quot;,
+            &quot;private&quot;,
+            &quot;krabi.jpg&quot;,
+            [[&quot;ริมทะเลยามเย็น&quot;, &quot;กระบี่&quot;, &quot;2026-05-02&quot;, &quot;ความทรงจำส่วนตัว&quot;]],
+        ],
+    ];
+    $tripIds = [];
+    foreach ($examples as $example) {
+        [
+            $user_id,
+            $category_id,
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $asset,
+            $places,
+        ] = $example;
+        $cover = bin2hex(random_bytes(24)) . &quot;.jpg&quot;;
+        if (
+            !copy(
+                dirname(__DIR__) . &quot;/assets/&quot; . $asset,
+                UPLOAD_DIR . &quot;/&quot; . $cover,
+            )
+        ) {
+            throw new RuntimeException(&quot;คัดลอกรูปตัวอย่างไม่ได้&quot;);
+        }
+        $created[] = $cover;
+        $stmt = $conn-&gt;prepare(
+            &quot;INSERT INTO trips(user_id,category_id,title,description,start_date,end_date,visibility,cover) VALUES(?,?,?,?,?,?,?,?)&quot;,
+        );
+        $stmt-&gt;bind_param(
+            &quot;iissssss&quot;,
+            $user_id,
+            $category_id,
+            $title,
+            $description,
+            $start,
+            $end,
+            $visibility,
+            $cover,
+        );
+        $stmt-&gt;execute();
+        $trip_id = $conn-&gt;insert_id;
+        $tripIds[] = $trip_id;
+        $stmt-&gt;close();
+        foreach ($places as $i =&gt; $p) {
+            [$name, $province, $visit, $story] = $p;
+            $sort = $i + 1;
+            $stmt = $conn-&gt;prepare(
+                &quot;INSERT INTO trip_places(trip_id,name,province,visit_date,story,sort_order) VALUES(?,?,?,?,?,?)&quot;,
+            );
+            $stmt-&gt;bind_param(
+                &quot;issssi&quot;,
+                $trip_id,
+                $name,
+                $province,
+                $visit,
+                $story,
+                $sort,
+            );
+            $stmt-&gt;execute();
+            $place_id = $conn-&gt;insert_id;
+            $stmt-&gt;close();
+            if ($i === 0) {
+                $filename = bin2hex(random_bytes(24)) . &quot;.jpg&quot;;
+                if (
+                    !copy(
+                        dirname(__DIR__) . &quot;/assets/&quot; . $asset,
+                        UPLOAD_DIR . &quot;/&quot; . $filename,
+                    )
+                ) {
+                    throw new RuntimeException(&quot;คัดลอกรูปตัวอย่างไม่ได้&quot;);
+                }
+                $created[] = $filename;
+                $stmt = $conn-&gt;prepare(
+                    &quot;INSERT INTO place_photos(place_id,filename) VALUES(?,?)&quot;,
+                );
+                $stmt-&gt;bind_param(&quot;is&quot;, $place_id, $filename);
+                $stmt-&gt;execute();
+                $stmt-&gt;close();
+            }
+        }
+    }
+    $stmt = $conn-&gt;prepare(
+        &quot;INSERT INTO bookmarks(user_id,trip_id) VALUES(?,?)&quot;,
+    );
+    $stmt-&gt;bind_param(&quot;ii&quot;, $ids[0], $tripIds[1]);
+    $stmt-&gt;execute();
+    $stmt-&gt;close();
+    $conn-&gt;commit();
+    echo &quot;สร้างสมาชิก 2 บัญชี ทริปสาธารณะ 3 และส่วนตัว 2 สำเร็จ\n&quot;;
+} catch (Throwable $error) {
+    $conn-&gt;rollback();
+    clean_files($created);
+    fwrite(STDERR, &quot;สร้างตัวอย่างไม่สำเร็จ: &quot; . $error-&gt;getMessage() . &quot;\n&quot;);
+    exit(1);
+}
+</code>
+</pre>
+</details>
+<details id="f31">
+    <summary>includes/cards.php</summary>
+    <pre>
+        <code>&lt;?php if (!$trips): ?&gt;
+&lt;section class=&quot;panel empty&quot;&gt;&lt;h2&gt;ยังไม่พบทริป&lt;/h2&gt;&lt;p&gt;ลองเปลี่ยนคำค้นหา หรือตัวกรองของคุณ&lt;/p&gt;&lt;/section&gt;
+&lt;?php else: ?&gt;
+&lt;div class=&quot;trip-grid&quot;&gt;
+&lt;?php foreach ($trips as $trip): ?&gt;
+&lt;article class=&quot;trip-card&quot;&gt;
+    &lt;a href=&quot;trip_detail.php?id=&lt;?= (int) $trip[
+        &quot;trip_id&quot;
+    ] ?&gt;&quot;&gt;&lt;img class=&quot;card-cover&quot; src=&quot;media.php?trip_id=&lt;?= (int) $trip[
+    &quot;trip_id&quot;
+] ?&gt;&quot; alt=&quot;&lt;?= h($trip[&quot;title&quot;]) ?&gt;&quot; loading=&quot;lazy&quot;&gt;&lt;/a&gt;
+    &lt;div class=&quot;card-body&quot;&gt;
+        &lt;span class=&quot;badge&quot;&gt;&lt;?= $trip[&quot;visibility&quot;] === &quot;private&quot;
+            ? &quot;ส่วนตัว&quot;
+            : &quot;สาธารณะ&quot; ?&gt;&lt;/span&gt;
+        &lt;p class=&quot;muted&quot;&gt;&lt;?= h($trip[&quot;category_name&quot;]) ?&gt;&lt;/p&gt;
+        &lt;h2&gt;&lt;a href=&quot;trip_detail.php?id=&lt;?= (int) $trip[&quot;trip_id&quot;] ?&gt;&quot;&gt;&lt;?= h(
+    $trip[&quot;title&quot;],
+) ?&gt;&lt;/a&gt;&lt;/h2&gt;
+        &lt;p class=&quot;excerpt&quot;&gt;&lt;?= h($trip[&quot;description&quot;]) ?&gt;&lt;/p&gt;
+        &lt;p class=&quot;muted&quot;&gt;&lt;?= h($trip[&quot;start_date&quot;]) ?&gt; — &lt;?= h(
+     $trip[&quot;end_date&quot;],
+ ) ?&gt;&lt;/p&gt;
+        &lt;a class=&quot;author&quot; href=&quot;profile.php?id=&lt;?= (int) $trip[
+            &quot;user_id&quot;
+        ] ?&gt;&quot;&gt;โดย &lt;?= h($trip[&quot;fullname&quot;]) ?&gt;&lt;/a&gt;
+    &lt;/div&gt;
+&lt;/article&gt;
+&lt;?php endforeach; ?&gt;
+&lt;/div&gt;
+&lt;?php endif; ?&gt;
+</code>
+</pre>
+</details>
+<details id="f32">
+    <summary>includes/place_fields.php</summary>
+    <pre>
+        <code>&lt;div class=&quot;form-grid&quot;&gt;
+&lt;div&gt;&lt;label for=&quot;name&quot;&gt;ชื่อสถานที่ *&lt;/label&gt;&lt;input id=&quot;name&quot; name=&quot;name&quot; maxlength=&quot;150&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;name&quot;] ?? ($place[&quot;name&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;div&gt;&lt;label for=&quot;province&quot;&gt;จังหวัด *&lt;/label&gt;&lt;input id=&quot;province&quot; name=&quot;province&quot; maxlength=&quot;100&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;province&quot;] ?? ($place[&quot;province&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;div&gt;&lt;label for=&quot;visit&quot;&gt;วันที่ไปเยือน *&lt;/label&gt;&lt;input id=&quot;visit&quot; type=&quot;date&quot; name=&quot;visit_date&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;visit_date&quot;] ?? ($place[&quot;visit_date&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;div&gt;&lt;label for=&quot;sort&quot;&gt;ลำดับการแสดง&lt;/label&gt;&lt;input id=&quot;sort&quot; type=&quot;number&quot; min=&quot;1&quot; max=&quot;1000&quot; name=&quot;sort_order&quot; value=&quot;&lt;?= (int) ($_POST[
+    &quot;sort_order&quot;
+] ??
+    ($place[&quot;sort_order&quot;] ?? 1)) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;label for=&quot;story&quot;&gt;เรื่องราวของสถานที่นี้&lt;/label&gt;&lt;textarea id=&quot;story&quot; name=&quot;story&quot; rows=&quot;5&quot; maxlength=&quot;10000&quot;&gt;&lt;?= h(
+    $_POST[&quot;story&quot;] ?? ($place[&quot;story&quot;] ?? &quot;&quot;),
+) ?&gt;&lt;/textarea&gt;
+&lt;label for=&quot;photos&quot;&gt;เพิ่มรูปภาพ (เลือกหลายรูปได้)&lt;/label&gt;&lt;input id=&quot;photos&quot; type=&quot;file&quot; name=&quot;photos[]&quot; accept=&quot;image/jpeg,image/png,image/webp&quot; multiple&gt;
+&lt;p class=&quot;muted&quot;&gt;ไม่เกิน 10 รูปต่อสถานที่ และไม่เกิน 5 MB ต่อรูป&lt;/p&gt;
+</code>
+</pre>
+</details>
+<details id="f33">
+    <summary>includes/trip_fields.php</summary>
+    <pre>
+        <code>&lt;label for=&quot;title&quot;&gt;ชื่อทริป *&lt;/label&gt;&lt;input id=&quot;title&quot; name=&quot;title&quot; maxlength=&quot;150&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;title&quot;] ?? ($trip[&quot;title&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;
+&lt;label for=&quot;description&quot;&gt;คำอธิบาย&lt;/label&gt;&lt;textarea id=&quot;description&quot; name=&quot;description&quot; maxlength=&quot;5000&quot; rows=&quot;4&quot;&gt;&lt;?= h(
+    $_POST[&quot;description&quot;] ?? ($trip[&quot;description&quot;] ?? &quot;&quot;),
+) ?&gt;&lt;/textarea&gt;
+&lt;div class=&quot;form-grid&quot;&gt;
+&lt;div&gt;&lt;label for=&quot;start&quot;&gt;วันที่เริ่มต้น *&lt;/label&gt;&lt;input id=&quot;start&quot; type=&quot;date&quot; name=&quot;start_date&quot; min=&quot;1900-01-01&quot; max=&quot;2200-12-31&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;start_date&quot;] ?? ($trip[&quot;start_date&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;div&gt;&lt;label for=&quot;end&quot;&gt;วันที่สิ้นสุด *&lt;/label&gt;&lt;input id=&quot;end&quot; type=&quot;date&quot; name=&quot;end_date&quot; min=&quot;1900-01-01&quot; max=&quot;2200-12-31&quot; value=&quot;&lt;?= h(
+    $_POST[&quot;end_date&quot;] ?? ($trip[&quot;end_date&quot;] ?? &quot;&quot;),
+) ?&gt;&quot; required&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;label for=&quot;category&quot;&gt;ประเภทการท่องเที่ยว&lt;/label&gt;&lt;select id=&quot;category&quot; name=&quot;category_id&quot; required&gt;&lt;?php foreach (
+    $categories
+    as $c
+): ?&gt;&lt;option value=&quot;&lt;?= (int) $c[&quot;category_id&quot;] ?&gt;&quot; &lt;?= (int) ($_POST[
+    &quot;category_id&quot;
+] ??
+    ($trip[&quot;category_id&quot;] ?? 1)) === (int) $c[&quot;category_id&quot;]
+    ? &quot;selected&quot;
+    : &quot;&quot; ?&gt;&gt;&lt;?= h($c[&quot;name&quot;]) ?&gt;&lt;/option&gt;&lt;?php endforeach; ?&gt;&lt;/select&gt;
+&lt;label for=&quot;cover&quot;&gt;&lt;?= empty($trip[&quot;trip_id&quot;])
+    ? &quot;รูปหน้าปก *&quot;
+    : &quot;เปลี่ยนรูปหน้าปก (ไม่เลือกจะใช้รูปเดิม)&quot; ?&gt;&lt;/label&gt;&lt;input id=&quot;cover&quot; type=&quot;file&quot; name=&quot;cover&quot; accept=&quot;image/jpeg,image/png,image/webp&quot; &lt;?= empty(
+    $trip[&quot;trip_id&quot;]
+)
+    ? &quot;required&quot;
+    : &quot;&quot; ?&gt;&gt;
+&lt;p class=&quot;muted&quot;&gt;JPG / PNG / WebP ไม่เกิน 5 MB ต่อไฟล์&lt;/p&gt;
+&lt;?php if (
+    !empty($trip[&quot;trip_id&quot;])
+): ?&gt;&lt;img class=&quot;preview&quot; src=&quot;media.php?trip_id=&lt;?= (int) $trip[
+    &quot;trip_id&quot;
+] ?&gt;&quot; alt=&quot;ปกปัจจุบัน&quot;&gt;&lt;?php endif; ?&gt;
+&lt;label for=&quot;visibility&quot;&gt;ความเป็นส่วนตัว&lt;/label&gt;&lt;select id=&quot;visibility&quot; name=&quot;visibility&quot;&gt;&lt;option value=&quot;private&quot; &lt;?= ($_POST[
+    &quot;visibility&quot;
+] ??
+    ($trip[&quot;visibility&quot;] ?? &quot;private&quot;)) ===
+&quot;private&quot;
+    ? &quot;selected&quot;
+    : &quot;&quot; ?&gt;&gt;ส่วนตัว — เฉพาะฉัน&lt;/option&gt;&lt;option value=&quot;public&quot; &lt;?= ($_POST[
+    &quot;visibility&quot;
+] ??
+    ($trip[&quot;visibility&quot;] ?? &quot;private&quot;)) ===
+&quot;public&quot;
+    ? &quot;selected&quot;
+    : &quot;&quot; ?&gt;&gt;สาธารณะ — ทุกคนดูได้&lt;/option&gt;&lt;/select&gt;
+</code>
+</pre>
+</details>
+<details id="f34">
+    <summary>place_view.php</summary>
+    <pre>
+        <code>&lt;?php
+require &quot;includes/init.php&quot;;
+$place_id = (int) ($_GET[&quot;id&quot;] ?? 0);
+[$place, $trip] = get_place($place_id);
+$photos = photos_for($place_id);
+$page_title = $place[&quot;name&quot;];
+require &quot;includes/header.php&quot;;
+?&gt;
+&lt;a class=&quot;back-link&quot; href=&quot;trip_detail.php?id=&lt;?= (int) $trip[
+    &quot;trip_id&quot;
+] ?&gt;&quot;&gt;← กลับทริป &lt;?= h($trip[&quot;title&quot;]) ?&gt;&lt;/a&gt;
+&lt;section class=&quot;panel&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;&lt;?= h(
+    $place[&quot;visit_date&quot;],
+) ?&gt;&lt;/p&gt;&lt;h1&gt;&lt;?= h($place[&quot;name&quot;]) ?&gt;&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;&lt;?= h(
+    $place[&quot;province&quot;],
+) ?&gt;&lt;/p&gt;&lt;p class=&quot;story&quot;&gt;&lt;?= h(
+    $place[&quot;story&quot;],
+) ?&gt;&lt;/p&gt;&lt;div class=&quot;photo-grid&quot;&gt;&lt;?php foreach (
+    $photos
+    as $photo
+): ?&gt;&lt;a href=&quot;media.php?photo_id=&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;media.php?photo_id=&lt;?= (int) $photo[
+    &quot;photo_id&quot;
+] ?&gt;&quot; alt=&quot;&lt;?= h($place[&quot;name&quot;]) ?&gt;&quot;&gt;&lt;/a&gt;&lt;?php endforeach; ?&gt;&lt;/div&gt;&lt;/section&gt;
+&lt;?php require &quot;includes/footer.php&quot;; ?&gt;
+</code>
+</pre>
+</details>
+</main>
+</html>

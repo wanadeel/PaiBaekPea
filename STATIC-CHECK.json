@@ -1,0 +1,5 @@
+{
+  "tool": "Node php-parser (not PHP runtime)",
+  "phpFiles": 27,
+  "syntaxErrors": []
+}
